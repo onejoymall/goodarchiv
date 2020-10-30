@@ -1,0 +1,1129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="mall.ProductMapper">
+    <select id="getProductTodayList" parameterType="com.webapp.mall.vo.TodayVO" resultType="java.util.Map">
+        <![CDATA[
+            SELECT
+                *,
+                (select code.code_name from code where code.code='product_delivery_type' and code.code_value =product.product_delivery_type) as product_delivery_type_name,
+                (select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=product.product_made_company_cd) as product_made_company_name,
+                (select code.code_name from code where code.code='product_sale_yn' and code.code_value =product.product_sale_yn) as product_sale_yn_name,
+                (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 1) as file_1
+            FROM product  where 1=1
+            and product_live_type is null
+            and CASE WHEN product_validity_yn ='Y' THEN product_validity_end > now() ELSE TRUE END
+        ]]>
+        <if test="product_cd_array != null">
+            and product_cd IN (
+            <foreach item="item" index="index" collection="product_cd_array" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        <if test="product_sale_yn != null"> <![CDATA[AND product_sale_yn= #{product_sale_yn} ]]></if>
+        <if test="product_use_yn != null"> <![CDATA[AND product_use_yn= #{product_use_yn} ]]></if>
+        <if test="product_approval_yn != null"> <![CDATA[AND product_approval_yn= #{product_approval_yn} ]]></if>
+        <if test="product_use_member_yn != null"> <![CDATA[AND product_use_member_yn= #{product_use_member_yn} ]]></if>
+    </select>
+    <select id="getProductList" parameterType="com.webapp.manager.vo.ProductVO" resultType="java.util.Map">
+        <![CDATA[
+            SELECT
+            	 *,
+            	CEIL(((product_user_payment - product_payment)/product_user_payment)*100) AS percent_discount,
+            	(SELECT ifnull(count(*),0) FROM product_review WHERE product_review.product_cd  =product.product_cd GROUP BY product.product_cd  )AS review_cnt,
+            	(SELECT round(avg(review_score),1) FROM product_review  WHERE product_review.product_cd = product.product_cd GROUP BY product.product_cd )AS review_score,
+                (select code.code_name from code where code.code='product_delivery_type' and code.code_value =product.product_delivery_type) as product_delivery_type_name,
+                (select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=product.product_made_company_cd) as product_made_company_name,
+                (select code.code_name from code where code.code='product_sale_yn' and code.code_value =product.product_sale_yn) as product_sale_yn_name,
+                (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 1) as file_1,
+                (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 2) as file_2,
+                (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 3) as file_3,
+                (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 4) as file_4,
+                (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 5) as file_5
+            FROM product  
+            ]]>
+            <if test='orderByKey =="sales_count"'>
+	            JOIN (select product_cd, COUNT(*) sales_count from payment GROUP BY product_cd) B
+				ON B.product_cd = product.product_cd
+			</if>
+			<![CDATA[
+			where 1=1
+            and product_live_type is null
+            and CASE WHEN product_validity_yn ='Y' THEN product_validity_start <= now() ELSE TRUE END
+            and CASE WHEN product_validity_yn ='Y' THEN product_validity_end > now() ELSE TRUE END
+            ]]>
+        <if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+        <if test="product_name != null"> <![CDATA[AND product_name LIKE CONCAT('%', #{product_name},'%' ) ]]></if>
+        <if test="product_sale_yn != null"> <![CDATA[AND product_sale_yn= #{product_sale_yn} ]]></if>
+        <if test="product_use_yn != null"> <![CDATA[AND product_use_yn= #{product_use_yn} ]]></if>
+        <if test="product_approval_yn != null"> <![CDATA[AND product_approval_yn= #{product_approval_yn} ]]></if>
+        <if test="product_use_member_yn != null"> <![CDATA[AND product_use_member_yn= #{product_use_member_yn} ]]></if>
+        <if test="product_ct != null and product_ct != ''"> <![CDATA[AND find_in_set(#{product_ct},replace(product_ct,'|',',')) > 0 ]]></if>
+        <if test="mainViewType != null"> <![CDATA[AND find_in_set('Y',replace(${mainViewType},'|',',')) > 0 ]]></if>
+        <if test="orderByKey != null"> order by ${orderByKey} ${orderByValue}</if>
+        <if test="orderByKey == null"> order by product_id DESC </if>
+        LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    <select id="getProductListCount" parameterType="com.webapp.manager.vo.ProductVO" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM product  where 1=1
+        and product_live_type is null
+        and CASE WHEN product_validity_yn ='Y' THEN product_validity_end > now() ELSE TRUE END
+        ]]>
+        <if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+        <if test="product_name != null"> <![CDATA[AND product_name LIKE CONCAT('%', #{product_name},'%' ) ]]></if>
+        <if test="product_sale_yn != null"> <![CDATA[AND product_sale_yn= #{product_sale_yn} ]]></if>
+        <if test="product_use_yn != null"> <![CDATA[AND product_use_yn= #{product_use_yn} ]]></if>
+        <if test="product_approval_yn != null"> <![CDATA[AND product_approval_yn= #{product_approval_yn} ]]></if>
+        <if test="product_use_member_yn != null"> <![CDATA[AND product_use_member_yn= #{product_use_member_yn} ]]></if>
+        <if test="product_ct != null"> <![CDATA[AND find_in_set(#{product_ct},replace(product_ct,'|',',')) > 0 ]]></if>
+        <if test="mainViewType != null"> <![CDATA[AND find_in_set('Y',replace(${mainViewType},'|',',')) > 0 ]]></if>
+    </select>
+    <select id="getProductViewDetail" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+            product_id,
+            product_cd,
+            product_market_cd,
+            product_use_yn,
+            product_sale_yn,
+            product_ct,
+            product_new_class,
+            product_md_class,
+            product_name,
+            product_name_en,
+            product_name_mg,
+            product_supply_pd_name,
+            product_model_name,
+            product_summary_memo,
+            product_brief_memo,
+            product_html,
+            product_mobile_html,
+            product_mobile_memo_config,
+            product_keyword,
+            product_tex_class,
+            product_payment,
+            product_payment_empty_yn,
+            product_payment_memo,
+            product_order_limit_quantity,
+            product_go_event_yn,
+            product_adult_yn,
+            product_option_yn,
+            product_option_class,
+            product_option_view_type,
+            product_option_set_name,
+            product_option_input,
+            product_option_style,
+            product_option_button_img,
+            product_option_color,
+            product_option_required,
+            product_sold_out_memo,
+            product_add_option,
+            product_add_option_name,
+            product_add_option_required,
+            product_add_option_max_lang,
+            product_detail_image,
+            product_list_image,
+            product_list_image_sm,
+            product_list_image_response,
+            product_add_image,
+            product_made_company_cd,
+            product_supplier,
+            product_brand,
+            product_trend,
+            product_self_class_cd,
+            product_create_date,
+            product_release_date,
+            product_validity_yn,
+            product_validity,
+            product_origin,
+            product_cm,
+            product_payment_info,
+            product_delivery_info,
+            product_change_info,
+            product_service_info,
+            product_delivery_class,
+            product_delivery_type,
+            product_delivery_International_type,
+            product_delivery_locale,
+            product_delivery_payment_type,
+            product_delivery_date,
+            product_delivery_payment_class,
+            product_delivery_payment,
+            product_delivery_store_pickup,
+            product_global_hs_code,
+            product_global_clearance,
+            product_material,
+            product_material_en,
+            product_fabric,
+            product_seo_yn,
+            product_seo_title,
+            product_seo_author,
+            product_seo_description,
+            product_seo_keywords,
+            product_seo_alt,
+            product_payment_type,
+            product_delivery_type_code,
+            product_memo,
+            product_point_class,
+            product_influencer,
+            product_sp_class,
+            product_live_type,
+            product_youtube_id,
+            product_payment_class_value,
+            product_use_member_yn,
+            product_stock_use_yn,
+            product_stock_quantity,
+            product_store_id,
+            product_store_id as product_user_ud,
+            product_definition_key,
+            product_definition_value,
+            product_exposure_kr,
+            product_exposure_usa,
+            product_exposure_cn,
+            product_exposure_jp,
+            delivery_t_code,
+            product_type,
+            (SELECT DATE_FORMAT(product_validity_start,'%Y-%m-%d'))product_validity_start,
+            (SELECT DATE_FORMAT(product_validity_end,'%Y-%m-%d'))product_validity_end,
+            (select IFNULL(product_user_payment,0)) as product_user_payment,
+            (select IFNULL(product_company_payment,0)) as product_company_payment,
+            (select IFNULL(product_payment,0)) as product_payment,
+            (select IFNULL(product_max_limit,0)) as product_max_limit,
+            (select IFNULL(product_min_limit,0)) as product_min_limit,
+            (select IFNULL(product_point_rate_cash,0)) as product_point_rate_cash,
+            (select IFNULL(product_point_rate,0)) as product_point_rate,
+            (select IFNULL(product_kg,0)) as product_kg,
+            (select code.code_name from code where code.code='product_brand' and code.code_value =product.product_brand) as product_brand_name,
+            (select code.code_name from code where code.code='product_delivery_type' and code.code_value =product.product_delivery_type) as product_delivery_type_name,
+            (select code.code_name from code where code.code='product_delivery_international_type' and code.code_value =product.product_delivery_international_type) as product_delivery_international_type_name,
+            (select code.code_name from code where code.code='product_delivery_payment_type' and code.code_value =product.product_delivery_payment_type) as product_delivery_payment_type_name,
+            (select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=product.product_made_company_cd) as product_made_company_name,
+            (select code.code_name from code where code.code='product_sale_yn' and code.code_value =product.product_sale_yn) as product_sale_yn_name,
+            (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 1) as file_1,
+            (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 2) as file_2,
+            (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 3) as file_3,
+            (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 4) as file_4,
+            (select product_file.file_link from product_file where product_file.key_id = product.product_cd and product_file.file_order = 5) as file_5,
+            (select Z.product_delivery_bundle_yn from store_delivery Z where product.product_store_id = Z.store_id) as product_delivery_bundle_yn
+        from product where product_cd=#{product_cd}
+        <if test="product_live_type == null or product_live_type == ''">
+        	and product_live_type is null
+        </if>
+    </select>
+    <select id="getUserProductPaymentList" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.*,
+            (select Z.product_cd from product Z where Z.product_id=A.product_id) as product_cd,
+            (select Z.product_name from product Z where Z.product_id=A.product_id) as product_name
+        FROM product_payment_history A  where 1=1
+        ]]>
+
+        <if test="pd_payment_user_id != null"> <![CDATA[AND A.coupon_id= #{pd_payment_user_id} ]]></if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        <if test="product_cd != null"> <![CDATA[AND product_cd= #{product_cd} ]]></if>
+        <if test="pd_payment_amount != null"> <![CDATA[AND product_cd= #{product_cd} ]]></if>
+        <if test="product_name != null"> <![CDATA[AND product_name= #{product_name} ]]></if>
+        <if test="pd_payment_cd != null"> <![CDATA[AND A.coupon_paid_class_cd= #{pd_payment_cd} ]]></if>
+        <if test="pd_payment_class_cd != null"> <![CDATA[AND A.coupon_paid_class_cd= #{pd_payment_class_cd} ]]></if>
+    </select>
+    <select id="getUserProductPaymentListCount" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM product_payment_history A  where 1=1
+        ]]>
+
+        <if test="pd_payment_user_id != null"> <![CDATA[AND A.coupon_id= #{pd_payment_user_id} ]]></if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        <if test="product_cd != null"> <![CDATA[AND product_cd= #{product_cd} ]]></if>
+        <if test="pd_payment_amount != null"> <![CDATA[AND product_cd= #{product_cd} ]]></if>
+        <if test="product_name != null"> <![CDATA[AND product_name= #{product_name} ]]></if>
+        <if test="pd_payment_cd != null"> <![CDATA[AND A.coupon_paid_class_cd= #{pd_payment_cd} ]]></if>
+        <if test="pd_payment_class_cd != null"> <![CDATA[AND A.coupon_paid_class_cd= #{pd_payment_class_cd} ]]></if>
+    </select>
+    <select id="getFavoritesProductList" resultType="java.util.HashMap" parameterType="java.util.HashMap">
+    /*getFavoritesProductList*/
+    	SELECT  A.*,A.product_cd,
+				(select Z.code_name from code Z where Z.code='product_brand' and Z.code_value =B.product_brand) as product_brand_name,
+				ifnull(B.product_payment,0) product_payment,
+				(select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 1) as file_1,
+				B.*,
+				(select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=B.product_made_company_cd) as product_made_company_name
+		FROM payment A
+		JOIN product B
+		ON A.product_cd = B.product_cd
+		and B.product_live_type is null
+		LEFT JOIN user C
+		ON A.payment_user_id = C.usr_id
+		WHERE C.email = #{email}
+		and A.order_no NOT LIKE 'GW%'
+		and A.payment_status != 'N'
+		GROUP BY A.product_cd
+		HAVING COUNT(A.product_cd) > 1
+		ORDER BY COUNT(A.product_cd) desc
+		LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    <select id="getFavoritesProductListCount" resultType="Integer" parameterType="java.util.HashMap">
+    	SELECT ifnull(count(*),0)		
+		FROM( SELECT A.product_cd
+		FROM payment A
+		LEFT JOIN product B
+		ON A.product_cd = B.product_cd
+		and B.product_live_type is null
+		LEFT JOIN user C
+		ON A.payment_user_id = C.usr_id
+		WHERE C.email = #{email}
+		and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+		and A.product_cd = B.product_cd
+		GROUP BY A.product_cd
+		HAVING COUNT(A.product_cd) > 1) tmp
+    </select>
+    <select id="getLastPaymentDate" parameterType="hashmap" resultType="hashmap">
+		SELECT date_format(A.reg_date,'%Y-%m-%d') reg_date
+		FROM payment A
+		WHERE A.payment_user_id = #{coupon_paid_user_id}
+		and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+		ORDER BY reg_date DESC
+		LIMIT 1
+    </select>
+    <insert id="insertProductFile" parameterType="com.webapp.board.common.FileVO" >
+        INSERT INTO product_file (key_id, file_name, real_name, file_size,file_link,file_order)
+        VALUES (#{parentPK}, #{filename}, #{realname}, #{filesize},#{filelink},#{fileorder})
+    </insert>
+    <insert id="insertProduct" parameterType="com.webapp.manager.vo.ProductVO">
+       insert into product(
+       <if test='product_approval_yn == "Y"'>product_approval_yn,</if>
+        product_cd,
+        product_store_id,
+        product_market_cd,
+        product_use_yn,
+        product_sale_yn,
+        product_ct,
+        product_new_class,
+        product_md_class,
+        product_name,
+        product_name_en,
+        product_name_mg,
+        product_supply_pd_name,
+        product_model_name,
+        product_summary_memo,
+        product_brief_memo,
+        product_html,
+        product_mobile_html,
+        product_mobile_memo_config,
+        product_keyword,
+        product_tex_class,
+        product_user_payment,
+        product_company_payment,
+        product_payment,
+        product_payment_empty_yn,
+        product_payment_memo,
+        product_order_limit_quantity,
+        product_max_limit,
+        product_min_limit,
+        product_go_event_yn,
+        product_adult_yn,
+        product_option_yn,
+        product_option_class,
+        product_option_view_type,
+        product_option_set_name,
+        product_option_input,
+        product_option_style,
+        product_option_button_img,
+        product_option_color,
+        product_option_required,
+        product_sold_out_memo,
+        product_add_option,
+        product_add_option_name,
+        product_add_option_required,
+        product_add_option_max_lang,
+        product_detail_image,
+        product_list_image,
+        product_list_image_sm,
+        product_list_image_response,
+        product_add_image,
+        product_made_company_cd,
+        product_supplier,
+        product_brand,
+        product_trend,
+        product_influencer,
+        product_self_class_cd,
+        product_create_date,
+        product_release_date,
+        product_validity_yn,
+        product_validity,
+        product_origin,
+        product_cm,
+        product_payment_info,
+        product_delivery_info,
+        product_change_info,
+        product_service_info,
+        product_delivery_class,
+        product_delivery_type,
+        product_delivery_International_type,
+        product_delivery_locale,
+        product_delivery_payment_type,
+        product_delivery_date,
+        product_delivery_payment_class,
+        product_delivery_payment,
+        product_delivery_store_pickup,
+        product_kg,
+        product_global_hs_code,
+        product_global_clearance,
+        product_material,
+        product_material_en,
+        product_fabric,
+        product_seo_yn,
+        product_seo_title,
+        product_seo_author,
+        product_seo_description,
+        product_seo_keywords,
+        product_seo_alt,
+        product_payment_type,
+        product_delivery_type_code,
+        product_memo,
+        product_point_class,
+        product_point_rate,
+        product_point_rate_cash,
+        product_sp_class,
+        product_live_type,
+        product_youtube_id,
+        product_payment_class_value,
+        product_use_member_yn,
+        product_validity_start,
+        product_validity_end,
+        product_definition_key,
+        product_definition_value,
+        product_exposure_kr,
+        product_exposure_usa,
+        product_exposure_cn,
+        product_exposure_jp,
+        delivery_t_code,
+        product_type
+       )values(
+       <if test='product_approval_yn == "Y"'>'Y',</if>
+        #{product_cd},
+        #{product_store_id},
+        #{product_market_cd},
+        #{product_use_yn},
+        #{product_sale_yn},
+        #{product_ct},
+        #{product_new_class},
+        #{product_md_class},
+        #{product_name},
+        #{product_name_en},
+        #{product_name_mg},
+        #{product_supply_pd_name},
+        #{product_model_name},
+        #{product_summary_memo},
+        #{product_brief_memo},
+        #{product_html},
+        #{product_mobile_html},
+        #{product_mobile_memo_config},
+        #{product_keyword},
+        #{product_tex_class},
+        #{product_user_payment},
+        #{product_company_payment},
+        #{product_payment},
+        #{product_payment_empty_yn},
+        #{product_payment_memo},
+        #{product_order_limit_quantity},
+        #{product_max_limit},
+        #{product_min_limit},
+        #{product_go_event_yn},
+        #{product_adult_yn},
+        #{product_option_yn},
+        #{product_option_class},
+        #{product_option_view_type},
+        #{product_option_set_name},
+        #{product_option_input},
+        #{product_option_style},
+        #{product_option_button_img},
+        #{product_option_color},
+        #{product_option_required},
+        #{product_sold_out_memo},
+        #{product_add_option},
+        #{product_add_option_name},
+        #{product_add_option_required},
+        #{product_add_option_max_lang},
+        #{product_detail_image},
+        #{product_list_image},
+        #{product_list_image_sm},
+        #{product_list_image_response},
+        #{product_add_image},
+        #{product_made_company_cd},
+        #{product_supplier},
+        #{product_brand},
+        #{product_trend},
+        #{product_influencer},
+        #{product_self_class_cd},
+        #{product_create_date},
+        #{product_release_date},
+        #{product_validity_yn},
+        #{product_validity},
+        #{product_origin},
+        #{product_cm},
+        #{product_payment_info},
+        #{product_delivery_info},
+        #{product_change_info},
+        #{product_service_info},
+        #{product_delivery_class},
+        #{product_delivery_type},
+        #{product_delivery_International_type},
+        #{product_delivery_locale},
+        #{product_delivery_payment_type},
+        #{product_delivery_date},
+        #{product_delivery_payment_class},
+        #{product_delivery_payment},
+        #{product_delivery_store_pickup},
+        #{product_kg},
+        #{product_global_hs_code},
+        #{product_global_clearance},
+        #{product_material},
+        #{product_material_en},
+        #{product_fabric},
+        #{product_seo_yn},
+        #{product_seo_title},
+        #{product_seo_author},
+        #{product_seo_description},
+        #{product_seo_keywords},
+        #{product_seo_alt},
+        #{product_payment_type},
+        #{product_delivery_type_code},
+        #{product_memo},
+        #{product_point_class},
+        #{product_point_rate},
+        #{product_point_rate_cash},
+        #{product_sp_class},
+        #{product_live_type},
+        #{product_youtube_id},
+        #{product_payment_class_value},
+        #{product_use_member_yn},
+        #{product_validity_start},
+        #{product_validity_end},
+        #{product_definition_key},
+        #{product_definition_value},
+        #{product_exposure_kr},
+        #{product_exposure_usa},
+        #{product_exposure_cn},
+        #{product_exposure_jp},
+        #{delivery_t_code},
+        #{product_type}
+       )
+
+    </insert>
+    <insert id="insertProductCopy" parameterType="java.util.Map">
+        insert into product (
+        <if test='product_approval_yn == "Y"'>product_approval_yn,</if>
+        product_cd,
+        product_market_cd,
+        product_use_yn,
+        product_sale_yn,
+        product_ct,
+        product_new_class,
+        product_md_class,
+        product_name,
+        product_name_en,
+        product_name_mg,
+        product_supply_pd_name,
+        product_model_name,
+        product_summary_memo,
+        product_brief_memo,
+        product_html,
+        product_mobile_html,
+        product_mobile_memo_config,
+        product_keyword,
+        product_tex_class,
+        product_user_payment,
+        product_company_payment,
+        product_payment,
+        product_payment_empty_yn,
+        product_payment_memo,
+        product_order_limit_quantity,
+        product_max_limit,
+        product_min_limit,
+        product_go_event_yn,
+        product_adult_yn,
+        product_option_yn,
+        product_option_class,
+        product_option_view_type,
+        product_option_set_name,
+        product_option_input,
+        product_option_style,
+        product_option_button_img,
+        product_option_color,
+        product_option_required,
+        product_sold_out_memo,
+        product_add_option,
+        product_add_option_name,
+        product_add_option_required,
+        product_add_option_max_lang,
+        product_detail_image,
+        product_list_image,
+        product_list_image_sm,
+        product_list_image_response,
+        product_add_image,
+        product_made_company_cd,
+        product_supplier,
+        product_brand,
+        product_trend,
+        product_influencer,
+        product_self_class_cd,
+        product_create_date,
+        product_release_date,
+        product_validity_yn,
+        product_validity,
+        product_origin,
+        product_cm,
+        product_payment_info,
+        product_delivery_info,
+        product_change_info,
+        product_service_info,
+        product_delivery_class,
+        product_delivery_type,
+        product_delivery_International_type,
+        product_delivery_locale,
+        product_delivery_payment_type,
+        product_delivery_date,
+        product_delivery_payment_class,
+        product_delivery_payment,
+        product_delivery_store_pickup,
+        product_kg,
+        product_global_hs_code,
+        product_global_clearance,
+        product_material,
+        product_material_en,
+        product_fabric,
+        product_seo_yn,
+        product_seo_title,
+        product_seo_author,
+        product_seo_description,
+        product_seo_keywords,
+        product_seo_alt,
+        product_payment_type,
+        product_delivery_type_code,
+        product_memo,
+        product_point_class,
+        product_point_rate,
+        product_point_rate_cash,
+        product_sp_class,
+        product_live_type,
+        product_youtube_id,
+        product_payment_class_value,
+        product_use_member_yn,
+        product_validity_start,
+        product_validity_end,
+        product_definition_key,
+        product_definition_value,
+        product_exposure_kr,
+        product_exposure_usa,
+        product_exposure_cn,
+        product_exposure_jp,
+        delivery_t_code,
+        product_type
+        )
+        select
+        <if test='product_approval_yn == "Y"'>'Y',</if>
+        #{product_cd},
+        product_market_cd,
+        product_use_yn,
+        product_sale_yn,
+        product_ct,
+        product_new_class,
+        product_md_class,
+        product_name,
+        product_name_en,
+        product_name_mg,
+        product_supply_pd_name,
+        product_model_name,
+        product_summary_memo,
+        product_brief_memo,
+        product_html,
+        product_mobile_html,
+        product_mobile_memo_config,
+        product_keyword,
+        product_tex_class,
+        product_user_payment,
+        product_company_payment,
+        product_payment,
+        product_payment_empty_yn,
+        product_payment_memo,
+        product_order_limit_quantity,
+        product_max_limit,
+        product_min_limit,
+        product_go_event_yn,
+        product_adult_yn,
+        product_option_yn,
+        product_option_class,
+        product_option_view_type,
+        product_option_set_name,
+        product_option_input,
+        product_option_style,
+        product_option_button_img,
+        product_option_color,
+        product_option_required,
+        product_sold_out_memo,
+        product_add_option,
+        product_add_option_name,
+        product_add_option_required,
+        product_add_option_max_lang,
+        product_detail_image,
+        product_list_image,
+        product_list_image_sm,
+        product_list_image_response,
+        product_add_image,
+        product_made_company_cd,
+        product_supplier,
+        product_brand,
+        product_trend,
+        product_influencer,
+        product_self_class_cd,
+        product_create_date,
+        product_release_date,
+        product_validity_yn,
+        product_validity,
+        product_origin,
+        product_cm,
+        product_payment_info,
+        product_delivery_info,
+        product_change_info,
+        product_service_info,
+        product_delivery_class,
+        product_delivery_type,
+        product_delivery_International_type,
+        product_delivery_locale,
+        product_delivery_payment_type,
+        product_delivery_date,
+        product_delivery_payment_class,
+        product_delivery_payment,
+        product_delivery_store_pickup,
+        product_kg,
+        product_global_hs_code,
+        product_global_clearance,
+        product_material,
+        product_material_en,
+        product_fabric,
+        product_seo_yn,
+        product_seo_title,
+        product_seo_author,
+        product_seo_description,
+        product_seo_keywords,
+        product_seo_alt,
+        product_payment_type,
+        product_delivery_type_code,
+        product_memo,
+        product_point_class,
+        product_point_rate,
+        product_point_rate_cash,
+        product_sp_class,
+        product_live_type,
+        product_youtube_id,
+        product_payment_class_value,
+        product_use_member_yn,
+        product_validity_start,
+        product_validity_end,
+        product_definition_key,
+        product_definition_value,
+        product_exposure_kr,
+        product_exposure_usa,
+        product_exposure_cn,
+        product_exposure_jp,
+        delivery_t_code,
+        product_type
+         from product where product_cd = #{request_product_cd}
+
+    </insert>
+    <insert id="insertProductFileCopy" parameterType="java.util.Map">
+        insert into product_file (key_id,file_name,real_name,file_size,file_link,file_order)
+        select #{product_cd},file_name,real_name,file_size,file_link,file_order from product_file where key_id =#{request_product_cd}
+    </insert>
+    
+    <update id="updateProductFile" parameterType="java.util.Map">
+       	update product_file set 
+		key_id				= #{parentPK},
+		file_name			=#{filename},
+		real_name			=#{realname},
+		file_size			=#{filesize},
+		file_link			=#{filelink},
+		file_order			=#{file_order}
+		where key_id		=#{parentPK}
+    </update>
+    
+    
+    <update id="updateProduct" parameterType="com.webapp.manager.vo.ProductVO">
+        <![CDATA[
+        update product set
+        product_approval_yn=#{product_approval_yn},
+        product_market_cd=#{product_market_cd},
+        product_store_id=#{product_store_id},
+        product_use_yn=#{product_use_yn},
+        product_sale_yn=#{product_sale_yn},
+        product_ct=#{product_ct},
+        product_new_class=#{product_new_class},
+        product_md_class=#{product_md_class},
+        product_name=#{product_name},
+        product_name_en=#{product_name_en},
+        product_name_mg=#{product_name_mg},
+        product_supply_pd_name=#{product_supply_pd_name},
+        product_model_name=#{product_model_name},
+        product_summary_memo=#{product_summary_memo},
+        product_brief_memo=#{product_brief_memo},
+        product_html=#{product_html},
+        product_mobile_html=#{product_mobile_html},
+        product_mobile_memo_config=#{product_mobile_memo_config},
+        product_keyword=#{product_keyword},
+        product_tex_class=#{product_tex_class},
+        product_user_payment=#{product_user_payment},
+        product_company_payment=#{product_company_payment},
+        product_payment=#{product_payment},
+        product_payment_empty_yn=#{product_payment_empty_yn},
+        product_payment_memo=#{product_payment_memo},
+        product_order_limit_quantity=#{product_order_limit_quantity},
+        product_max_limit=#{product_max_limit},
+        product_min_limit=#{product_min_limit},
+        product_go_event_yn=#{product_go_event_yn},
+        product_adult_yn=#{product_adult_yn},
+        product_option_yn=#{product_option_yn},
+        product_option_class=#{product_option_class},
+        product_option_view_type=#{product_option_view_type},
+        product_option_set_name=#{product_option_set_name},
+        product_option_input=#{product_option_input},
+        product_option_style=#{product_option_style},
+        product_option_button_img=#{product_option_button_img},
+        product_option_color=#{product_option_color},
+        product_option_required=#{product_option_required},
+        product_sold_out_memo=#{product_sold_out_memo},
+        product_add_option=#{product_add_option},
+        product_add_option_name=#{product_add_option_name},
+        product_add_option_required=#{product_add_option_required},
+        product_add_option_max_lang=#{product_add_option_max_lang},
+        product_detail_image=#{product_detail_image},
+        product_list_image=#{product_list_image},
+        product_list_image_sm=#{product_list_image_sm},
+        product_list_image_response=#{product_list_image_response},
+        product_add_image=#{product_add_image},
+        product_made_company_cd=#{product_made_company_cd},
+        product_supplier=#{product_supplier},
+        product_brand=#{product_brand},
+        product_trend=#{product_trend},
+        product_influencer=#{product_influencer},
+        product_self_class_cd=#{product_self_class_cd},
+        product_create_date=#{product_create_date},
+        product_release_date=#{product_release_date},
+        product_validity_yn=#{product_validity_yn},
+        product_validity=#{product_validity},
+        product_origin=#{product_origin},
+        product_cm=#{product_cm},
+        product_payment_info=#{product_payment_info},
+        product_delivery_info=#{product_delivery_info},
+        product_change_info=#{product_change_info},
+        product_service_info=#{product_service_info},
+        product_delivery_class=#{ product_delivery_class},
+        product_delivery_type=#{ product_delivery_type},
+        product_delivery_International_type=#{ product_delivery_International_type},
+        product_delivery_locale=#{ product_delivery_locale},
+        product_delivery_payment_type=#{ product_delivery_payment_type},
+        product_delivery_date=#{ product_delivery_date},
+        product_delivery_payment_class=#{ product_delivery_payment_class},
+        product_delivery_payment=#{ product_delivery_payment},
+        product_delivery_store_pickup=#{ product_delivery_store_pickup},
+        product_kg=#{ product_kg},
+        product_global_hs_code=#{ product_global_hs_code},
+        product_global_clearance=#{ product_global_clearance},
+        product_material=#{ product_material},
+        product_material_en=#{ product_material_en},
+        product_fabric=#{ product_fabric},
+        product_seo_yn=#{ product_seo_yn},
+        product_seo_title=#{ product_seo_title},
+        product_seo_author=#{ product_seo_author},
+        product_seo_description=#{ product_seo_description},
+        product_seo_keywords=#{ product_seo_keywords},
+        product_seo_alt=#{ product_seo_alt},
+        product_payment_type=#{ product_payment_type},
+        product_delivery_type_code=#{ product_delivery_type_code},
+        product_memo=#{ product_memo},
+        product_point_class=#{ product_point_class},
+        product_point_rate=#{ product_point_rate},
+        product_point_rate_cash=#{ product_point_rate_cash},
+        product_sp_class = #{product_sp_class},
+        product_live_type=#{product_live_type},
+        product_youtube_id=#{product_youtube_id},
+        product_payment_class_value=#{product_payment_class_value},
+        product_use_member_yn=#{product_use_member_yn},
+        product_validity_start=#{product_validity_start},
+        product_validity_end=#{product_validity_end},
+        product_definition_key = #{product_definition_key},
+        product_definition_value = #{product_definition_value},
+        product_exposure_kr = #{product_exposure_kr},
+        product_exposure_usa = #{product_exposure_usa},
+        product_exposure_cn = #{product_exposure_cn},
+        product_exposure_jp = #{product_exposure_jp},
+        delivery_t_code = #{delivery_t_code},
+        product_type = #{product_type}
+        where product_cd =#{product_cd}
+        ]]>
+    </update>
+    <delete id="deleteProduct" parameterType="java.util.Map">
+        <foreach collection="list" item="item" separator=";" open="DECLARE BEGIN" close="; END;">
+        <![CDATA[
+        delete product where product_id = #{item.product_id}
+        ]]>
+        </foreach>
+    </delete>
+    <delete id="deleteProductPaymentHistory" parameterType="java.util.Map">
+        <foreach collection="list" item="item" separator=";" open="DECLARE BEGIN" close="; END;">
+            <![CDATA[
+        delete product_payment_history where pd_payment_history_id = #{item.pd_payment_history_id}
+        ]]>
+        </foreach>
+    </delete>
+    <delete id="deleteProductFile" parameterType="com.webapp.board.common.FileVO">
+        delete from product_file  where key_id = #{parentPK} and file_order = #{fileorder}
+    </delete>
+
+    <select id="getMgProductList" parameterType="com.webapp.manager.vo.ProductVO" resultType="java.util.Map">
+       /*getMgProductList*/
+       
+        <![CDATA[
+            SELECT A.*,
+                (select code.code_name from code where code.code='product_delivery_type' and code.code_value =A.product_delivery_type) as product_delivery_type_name,
+                (select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=A.product_made_company_cd) as product_made_company_name,
+                (select code.code_name from code where code.code='product_sale_yn' and code.code_value =A.product_sale_yn) as product_sale_yn_name,
+                (select product_file.file_link from product_file where product_file.key_id = A.product_cd and product_file.file_order = 1) as file_1,
+                (select product_file.file_link from product_file where product_file.key_id = A.product_cd and product_file.file_order = 2) as file_2,
+                (select product_file.file_link from product_file where product_file.key_id = A.product_cd and product_file.file_order = 3) as file_3,
+                (select product_file.file_link from product_file where product_file.key_id = A.product_cd and product_file.file_order = 4) as file_4,
+                (select product_file.file_link from product_file where product_file.key_id = A.product_cd and product_file.file_order = 5) as file_5
+            FROM (select * from product order by product_id DESC LIMIT ${rowStart-1}, ${displayRowCount}) A
+			LEFT JOIN store B
+			on A.product_supplier = B.supplier_cd
+			LEFT JOIN (SELECT Z.product_class_name AS brand_name, Z.product_class_code FROM product_class_code Z WHERE Z.product_class_code_type = 'B') C
+			ON A.product_brand = C.product_class_code
+			LEFT JOIN (SELECT Z.product_class_name AS origin_name, Z.product_class_code FROM product_class_code Z WHERE Z.product_class_code_type = 'O') D
+			ON A.product_origin = D.product_class_code
+			where 1=1
+        ]]>
+        <if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        <if test="product_approval_yn != null and product_approval_yn !=''"><![CDATA[AND A.product_approval_yn = #{product_approval_yn}]]></if>
+        <if test="store_id != null and store_id !=''"><![CDATA[AND B.store_id = #{store_id}]]></if>
+        <if test="product_type != null and product_type !=''"><![CDATA[AND A.product_type = #{product_type}]]></if>
+        <if test="category1 != null and  category1 != ''">
+        	<![CDATA[
+        		AND (
+        			find_in_set(#{category1},replace(product_ct,'|',','))
+        			OR  find_in_set(#{category2},replace(product_ct,'|',','))
+        			OR  find_in_set(#{category3},replace(product_ct,'|',','))
+       			)
+        	]]>
+        </if>
+        order by product_id DESC
+    </select>
+    <select id="getMgProductListCount" parameterType="com.webapp.manager.vo.ProductVO" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM product A
+		LEFT JOIN store B
+		on A.product_supplier = B.supplier_cd
+		LEFT JOIN (SELECT Z.product_class_name AS brand_name, Z.product_class_code FROM product_class_code Z WHERE Z.product_class_code_type = 'B') C
+		ON A.product_brand = C.product_class_code
+		LEFT JOIN (SELECT Z.product_class_name AS origin_name, Z.product_class_code FROM product_class_code Z WHERE Z.product_class_code_type = 'O') D
+		ON A.product_origin = D.product_class_code  
+		where 1=1
+
+        ]]>
+        <if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        <if test="product_approval_yn != null and product_approval_yn !=''"><![CDATA[AND A.product_approval_yn = #{product_approval_yn}]]></if>
+        <if test="store_id != null and store_id !=''"><![CDATA[AND B.store_id = #{store_id}]]></if>
+        <if test="product_type != null and product_type !=''"><![CDATA[AND A.product_type = #{product_type}]]></if>
+        <if test="category1 != null and  category1 != ''">
+        	<![CDATA[
+        		AND (
+        			find_in_set(#{category1},replace(product_ct,'|',','))
+        			OR  find_in_set(#{category2},replace(product_ct,'|',','))
+        			OR  find_in_set(#{category3},replace(product_ct,'|',','))
+       			)
+        	]]>
+        </if>
+    </select>
+    
+    <select id="sameSupplierProductList" parameterType="hashmap" resultType="hashmap">
+    	SELECT *,
+    		(select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 1) as file_1
+		FROM product A
+		WHERE A.product_supplier = (select Z.product_supplier FROM product Z WHERE Z.product_cd = #{product_cd})
+		ORDER BY reg_date DESC
+		LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    
+    <select id="relatedProductList" parameterType="hashmap" resultType="hashmap">
+    	SELECT *,
+    		(select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 1) as file_1
+		FROM product A
+		WHERE 
+       	<foreach collection="product_cts" item="item" separator="OR" open="(" close=")">
+        		<![CDATA[FIND_IN_SET(#{item},replace(A.product_ct,'|',',')) ]]>
+       	</foreach>
+		ORDER BY reg_date DESC
+		LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    
+    <select id="serialProductList" parameterType="hashmap" resultType="hashmap">
+    	SELECT A.*,
+			   (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 1) as file_1
+		FROM product A
+		JOIN product_history B
+		ON B.product_current = A.product_cd
+		WHERE (B.product_prev = #{product_cd}
+		OR B.product_next = #{product_cd})
+		AND B.product_current != #{product_cd}
+		GROUP BY B.product_current
+		ORDER BY COUNT(B.product_current) DESC
+		LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    
+    <insert id="insertProductHistory" parameterType="hashmap">
+    	INSERT INTO product_history(
+			product_prev,
+			product_current,
+			usr_id
+		)VALUES(
+			#{product_prev},
+			#{product_current},
+			#{usr_id}
+		)
+    </insert>
+    
+    <update id="updateProductHistory" parameterType="hashmap">
+	    UPDATE product_history SET 
+			product_next = #{product_next},
+			update_date = SYSDATE()
+		WHERE usr_id = #{usr_id}
+		AND product_current = #{product_current}
+		ORDER BY reg_date DESC
+		LIMIT 1
+    </update>
+    
+    <select id="getNaverProductList" parameterType="hashmap" resultType="hashmap">
+    	select A.*,
+    		(SELECT Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 1) as file_1,
+			(SELECT Z.pd_category_name FROM product_category Z WHERE Z.pd_category_id = SUBSTRING_INDEX(A.product_ct, '|', 1)) as product_category_name,
+			SUBSTRING_INDEX(A.product_ct, '|', 1) as product_category_id
+    	from product A
+    	where 1=1
+    	<foreach item="item" index="index" collection="itemIds" separator="," open="AND product_cd in (" close=")">
+            #{item}
+        </foreach>
+    </select>
+    <insert id="insertProductProposal" parameterType="hashmap">
+    	insert into product_proposal(
+    		store_id,
+    		target_store_id,
+    		product_cd,
+    		proposal_fee,
+    		proposal_html
+    	)values(
+	    	#{store_id},
+			#{target_store_id},
+			#{product_cd},
+			#{proposal_fee},
+			#{proposal_html}
+    	);
+    </insert>
+    <update id="updateProductProposal" parameterType="hashmap">
+    	update product_proposal SET
+    		store_id = #{store_id},
+			target_store_id = #{target_store_id},
+			product_cd = #{product_cd},
+			proposal_fee = #{proposal_fee},
+			proposal_html = #{proposal_html}
+    	where proposal_id = #{proposal_id}
+    </update>
+    <update id="acceptProductProposal" parameterType="hashmap">
+    	update product_proposal SET
+    		accept_yn = #{accept_yn}
+    	where proposal_id = #{proposal_id}
+    </update>
+    <select id="getProductProposalList" parameterType="hashmap" resultType="hashmap">
+    	SELECT A.*,
+    		D.product_name,
+			B.store_name AS store_name,
+			C.store_name AS target_store_name
+		FROM product_proposal A
+		LEFT JOIN store B
+		ON A.store_id = B.store_id
+		LEFT JOIN store C
+		ON A.target_store_id = C.store_id
+		LEFT JOIN product D
+		ON A.product_cd = D.product_cd
+		WHERE 1=1
+		<if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+		<if test="proposal_type == null or proposal_type == ''">AND A.store_id = #{store_id}</if>
+		<if test='proposal_type == "O"'>AND A.target_store_id = #{store_id}</if>
+		<if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        order by A.reg_date desc 
+        LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    <select id="getProductProposalListCount" parameterType="hashmap" resultType="int">
+    	SELECT ifnull(count(*),0) as cnt
+		FROM product_proposal A
+		LEFT JOIN store B
+		ON A.store_id = B.store_id
+		LEFT JOIN store C
+		ON A.target_store_id = C.store_id
+		LEFT JOIN product D
+		ON A.product_cd = D.product_cd
+		WHERE 1=1
+		<if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+		<if test="proposal_type == null or proposal_type == ''">AND A.store_id = #{store_id}</if>
+		<if test='proposal_type == "O"'>AND A.target_store_id = #{store_id}</if>
+		<if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+    </select>
+    <select id="getProposalDetail" resultType="hashmap" parameterType="hashmap">
+    	select A.*,
+    		B.product_name
+    	from product_proposal A
+    	join product B
+    	on A.product_cd = B.product_cd
+    	where A.proposal_id = #{proposal_id}
+    </select>
+</mapper>

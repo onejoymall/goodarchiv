@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="manager.StoreInfoMapper">
+    <select id="getStoreInfo" resultType="java.util.HashMap" parameterType="com.webapp.manager.vo.StoreVO">
+     /*getStoreInfo*/
+		 select *,
+    (select code.code_name from code where code.code='store_approval_status' and code.code_value=store.store_approval_status) as store_approval_status_name,
+    (select product_file.file_link from product_file where product_file.key_id = store.store_id and product_file.file_order = 1) as file_1,
+    (select product_file.file_name from product_file where product_file.key_id = store.store_id and product_file.file_order = 1) as file_name,
+	<![CDATA[    
+	 CASE WHEN  DATE_FORMAT(CURRENT_TIMESTAMP(),'%Y-%m-%d' ) >= DATE_FORMAT(info_alert_date,'%Y-%m-%d' ) THEN 'Y'
+    	ELSE 'N'
+	 END AS ALERT_CHK
+	]]>
+    from store where store_id=#{store_id}
+    </select>
+    
+    
+   <update id="updateStoreInfo" parameterType="java.util.Map">
+  /*updateStoreInfo*/
+		update store set 
+		store_name			= #{store_name},
+		store_reg			=#{store_reg},
+		store_creator_yn	=#{store_creator_yn},
+		store_ceo_name		=#{store_ceo_name},
+		store_type			=#{store_type},
+		store_item			=#{store_item},
+		store_online_reg	=#{store_online_reg},
+		store_tel			=#{store_tel},
+		store_mail			=#{store_mail},
+		store_fax			=#{store_fax},
+		postcode			=#{postcode},
+		roadAddress			=#{roadAddress},
+		jibunAddress		=#{jibunAddress},
+		extraAddress		=#{extraAddress},
+		tex_email			=#{tex_email},
+		store_bank_account	=#{store_bank_account},
+		store_bank_holder	=#{store_bank_holder},
+		store_bank_name		=#{store_bank_name},
+		info_alert_date = date_add(CURRENT_TIMESTAMP(), interval 3 MONTH),
+		store_info_chkDate =CURRENT_TIMESTAMP()
+		where store_id		=#{store_id}
+
+    </update>
+    
+    <select id="selectfileInfo" parameterType="hashmap" resultType="int">
+    /*selectfileInfo*/
+    SELECT count(*) FROM product_file WHERE key_id =#{store_id}
+    </select>
+    
+    <update id="updateStoreFile" parameterType="java.util.Map">
+      /*updateStoreFile*/
+       	update product_file set 
+		key_id				= #{parentPK},
+		file_name			=#{filename},
+		real_name			=#{realname},
+		file_size			=#{filesize},
+		file_link			=#{filelink},
+		file_order			=#{fileorder}
+		where key_id		=#{parentPK}
+    </update>
+    
+     <insert id="insertProductFile1" parameterType="com.webapp.board.common.FileVO" >
+        /*insertProductFile1*/
+        INSERT INTO product_file (key_id, file_name, real_name, file_size,file_link,file_order)
+        VALUES (#{parentPK}, #{filename}, #{realname}, #{filesize},#{filelink},#{fileorder})
+        ON DUPLICATE KEY UPDATE key_id=#{parentPK}
+        ,file_size=#{filesize}
+        ,file_link=#{filelink}
+        ,file_order=#{fileorder}
+    </insert>
+    
+</mapper>

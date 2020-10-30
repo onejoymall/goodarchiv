@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="mall.MgCommonMapper">
+    <delete id="ListDelete" parameterType="com.webapp.manager.vo.MgCommonVO">
+        <![CDATA[
+        delete from ${table_name} where ${pk} in
+        ]]>
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+             #{item}
+        </foreach>
+    </delete>
+    <update id="listUpdate" parameterType="com.webapp.manager.vo.MgCommonVO">
+        <![CDATA[
+        update ${table_name} set ${column} = #{update_value} where ${pk} in
+        ]]>
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+    <update id="listStockUpdate" parameterType="com.webapp.manager.vo.StockVO">
+        <![CDATA[
+        update ${table_name}
+        set
+             product_stock_use_yn = #{product_stock_use_yn},
+             product_stock_quantity = #{product_stock_quantity}
+        where ${pk} in
+        ]]>
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+    <update id="productListCategoryUpdate" parameterType="com.webapp.manager.vo.CategoryVO">
+        <![CDATA[
+        update ${table_name}
+        set
+             product_ct = #{product_ct},
+             product_new_class = #{product_new_class},
+             product_sp_class = #{product_sp_class},
+             product_md_class = #{product_md_class}
+        where ${pk} in
+        ]]>
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+</mapper>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="mall.CartMapper">
+    <select id="getCartPaymentList" parameterType="com.webapp.mall.vo.CartPaymentVO" resultType="java.util.Map">
+        <![CDATA[
+        select
+            A.*,
+            B.*,
+            (select Z.product_delivery_bundle_yn from store_delivery Z where B.product_store_id = Z.store_id) as product_delivery_bundle_yn,
+            (select code.code_name from code where code.code='product_delivery_type' and code.code_value =B.product_delivery_type) as product_delivery_type_name,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 1) as file_1
+        from product_cart A join product B on(A.product_cd = B.product_cd) where A.cart_user_id =#{cart_user_id} and A.cart_cd in
+        ]]>
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by A.reg_date DESC
+    </select>
+
+    <delete id="CartPaymentListDelete" parameterType="com.webapp.mall.vo.CartPaymentVO">
+        delete from product_cart where cart_cd in
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+        #{item}
+        </foreach>
+    </delete>
+
+    <select id="getPaymentCartSum" parameterType="com.webapp.mall.vo.CartPaymentVO" resultType="java.util.Map">
+
+        select
+            ifnull(sum(B.product_payment * A.payment_order_quantity),0) as total_payment,
+            ifnull(sum(B.product_user_payment * A.payment_order_quantity),0) as total_ori_payment,
+            ifnull(sum(round((B.product_payment * B.product_point_rate)/100)),0) as point_add
+        from product_cart A left join product B on(A.product_cd = B.product_cd) where A.cart_user_id =#{cart_user_id} and A.cart_cd in
+        <foreach collection="chk" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getCartList" parameterType="java.util.Map" resultType="java.util.Map">
+        <![CDATA[
+        select
+            A.*,
+            B.*,
+            (select code.code_name from code where code.code='product_delivery_type' and code.code_value =B.product_delivery_type) as product_delivery_type_name,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 1) as file_1,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 2) as file_2,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 3) as file_3,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 4) as file_4,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 5) as file_5
+        from product_cart A join product B on(A.product_cd = B.product_cd) where A.cart_user_id =#{cart_user_id}
+        ]]>
+        <if test="product_cd != null"> <![CDATA[AND A.product_cd= #{product_cd} ]]></if>
+        order by A.reg_date DESC LIMIT ${rowStart-1}, ${staticRowEnd}
+    </select>
+    <select id="getTopCartListCount" parameterType="java.util.Map" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM product_cart  where cart_user_id = #{cart_user_id}
+
+        ]]>
+    </select>
+    <select id="getCartListCount" parameterType="java.util.Map" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM product_cart  where cart_user_id = #{cart_user_id}
+
+        ]]>
+        <if test="product_cd != null and product_cd != ''"> <![CDATA[AND product_cd= #{product_cd} ]]></if>
+        <if test="option_name != null and option_name !=''"> <![CDATA[AND option_name= #{option_name} ]]></if>
+    </select>
+
+    <select id="getCartSum" parameterType="java.util.Map" resultType="java.util.Map">
+
+        select
+            ifnull(sum(B.product_payment * A.payment_order_quantity),0) as total_payment,
+            ifnull(sum(B.product_user_payment * A.payment_order_quantity),0) as total_ori_payment,
+            ifnull(sum(round((B.product_payment * B.product_point_rate)/100)),0) as point_add
+        from product_cart A left join product B on(A.product_cd = B.product_cd) where A.cart_user_id =#{cart_user_id}
+
+    </select>
+    <select id="getCartProductList" parameterType="java.util.Map" resultType="java.util.Map">
+        select A.*, B.*,
+        	(select Z.product_delivery_bundle_yn from store_delivery Z where B.product_store_id = Z.store_id) as product_delivery_bundle_yn,
+        	(select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 1) as file_1,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 2) as file_2,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 3) as file_3,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 4) as file_4,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 5) as file_5
+        from product_cart A 
+        join product B 
+        on(A.product_cd = B.product_cd) 
+        where A.cart_user_id =#{cart_user_id}
+    </select>
+    <select id="getCartStoreCount" parameterType="hashmap" resultType="Integer">
+    	SELECT COUNT(*)
+		FROM product_cart A
+		JOIN product B
+		ON A.product_cd = B.product_cd
+		WHERE A.cart_user_id = #{cart_user_id}
+		AND B.product_store_id = #{product_store_id}
+    </select>
+
+    <insert id="insertCart" parameterType="java.util.Map">
+        insert into product_cart(
+        cart_cd,
+        product_cd,
+        cart_user_id,
+        member_yn,
+        payment_order_quantity,
+        select_option_value,
+        option_name)
+        values (
+        #{cart_cd},
+        #{product_cd},
+        #{cart_user_id},
+        #{member_yn},
+        #{payment_order_quantity},
+        #{select_option_value},
+        #{option_name})
+    </insert>
+    <insert id="insertCartOption" parameterType="com.webapp.mall.vo.OptionVO">
+        insert into product_cart_option(cart_cd,option_name,select_option_value)
+        <foreach collection="optionVOList" item="item" separator=" , ">
+            (#{item.cart_cd}, #{item.option_name}, #{item.select_option_value})
+        </foreach>
+        values (#{cart_cd},#{option_name},#{select_option_value})
+    </insert>
+
+    <delete id="deleteCart" parameterType="com.webapp.manager.vo.ProductVO">
+        delete from product_cart where product_cd=#{product_cd}
+    </delete>
+
+    <update id="updateCart" parameterType="java.util.Map">
+        update product_cart set payment_order_quantity=#{payment_order_quantity} where cart_cd = #{cart_cd}
+    </update>
+
+    <update id="updateCartUser" parameterType="java.util.Map">
+        update product_cart set cart_user_id= #{cart_user_id}
+         where cart_user_id = #{nonMembersUserId}
+    </update>
+
+    <select id="getFavoritesList" parameterType="java.util.Map" resultType="java.util.Map">
+        <![CDATA[
+        select
+            A.*,
+            B.*,
+            (select code.code_name from code where code.code='product_delivery_type' and code.code_value =B.product_delivery_type) as product_delivery_type_name,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 1) as file_1,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 2) as file_2,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 3) as file_3,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 4) as file_4,
+            (select Z.file_link from product_file Z where Z.key_id = B.product_cd and Z.file_order = 5) as file_5
+        from product_favorites A left join product B on(A.product_cd = B.product_cd) where A.user_id =#{user_id}
+        ]]>
+        <if test="product_cd != null"> <![CDATA[AND A.product_cd= #{product_cd} ]]></if>
+        order by A.reg_date DESC LIMIT ${rowStart-1}, ${staticRowEnd}
+    </select>
+    <select id="getFavoritesListCount" parameterType="java.util.Map" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM product_favorites  where user_id = #{user_id}
+
+        ]]>
+        <if test="product_cd != null"> <![CDATA[AND product_cd= #{product_cd} ]]></if>
+    </select>
+
+    <select id="getFavoritesSum" parameterType="java.util.Map" resultType="java.util.Map">
+        <![CDATA[
+        select
+            sum(B.product_payment) as total_payment,sum(B.product_delivery_payment) as total_delivery_payment
+        from product_favorites A left join product B on(A.product_cd = B.product_cd) where A.user_id =#{user_id}
+        ]]>
+        order by A.reg_date DESC LIMIT ${rowStart-1}, ${staticRowEnd}
+    </select>
+
+    <insert id="insertFavorites" parameterType="java.util.Map">
+        insert into product_favorites(product_favorites_cd,product_cd,user_id,member_yn) values (#{product_favorites_cd},#{product_cd},#{user_id},#{member_yn})
+    </insert>
+    <delete id="deleteFavorite" parameterType="com.webapp.manager.vo.ProductVO">
+        delete from product_favorites where product_cd=#{product_cd}
+    </delete>
+
+
+</mapper>

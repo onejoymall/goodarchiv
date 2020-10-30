@@ -1,0 +1,769 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="mall.GiveawayMapper">
+    <select id="getGiveawayDetail" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.*,
+            (select code.code_name from code where code.code='product_delivery_type' and code.code_value =A.giveaway_delivery_type) as giveaway_delivery_type_name,
+            (select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=A.giveaway_made_company_cd) as giveaway_made_company_name,
+            (select code.code_name from code where code.code='product_sale_yn' and code.code_value =A.giveaway_sale_yn) as giveaway_sale_yn_name,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 1) as file_1,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 2) as file_2,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 3) as file_3,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 4) as file_4,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 5) as file_5,
+            ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) as parti_rate,
+            ifnull((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) , 0) sum_play_point,
+            (select ZZ.giveaway_winner_user_id from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd) giveaway_winner_user_id,
+                        (select ZZ.giveaway_winner_user_id from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd) giveaway_winner_user_id,
+                CONCAT(
+                    left(
+                        SUBSTRING_INDEX(
+                            (select (select UU.email from user UU where UU.usr_id =ZZ.giveaway_winner_user_id) from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd),'@', 1)
+                    ,length(
+                        SUBSTRING_INDEX(
+                            (select (select UU.email from user UU where UU.usr_id =ZZ.giveaway_winner_user_id) from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd),'@', 1))-1),
+            '***','@',
+            SUBSTRING_INDEX((select (select UU.email from user UU where UU.usr_id =ZZ.giveaway_winner_user_id) from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd),'@', -1)) email,
+            ifnull((select count(1) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) , 0) player_count
+        FROM giveaway A  where 1=1
+        ]]>
+        <if test="giveaway_id != null and giveaway_id != ''"  > <![CDATA[AND A.giveaway_id= #{giveaway_id} ]]></if>
+        <if test="giveaway_cd != null and giveaway_cd != ''"> <![CDATA[AND A.giveaway_cd= #{giveaway_cd} ]]></if>
+    </select>
+    <select id="getGiveawayPlayDetail" resultType="java.util.HashMap">
+        
+    </select>
+    <select id="getGiveawayList" resultType="java.util.HashMap">
+        <![CDATA[
+        select
+        A.*,
+            ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) as parti_rate,
+            ifnull((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) , 0) sum_play_point,
+            ifnull((select count(1) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) , 0) player_count,
+            (select ZZ.giveaway_winner_user_id from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd) giveaway_winner_user_id,
+                CONCAT(
+                    left(
+                        SUBSTRING_INDEX(
+                            (select (select UU.email from user UU where UU.usr_id =ZZ.giveaway_winner_user_id) from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd),'@', 1)
+                    ,length(
+                        SUBSTRING_INDEX(
+                            (select (select UU.email from user UU where UU.usr_id =ZZ.giveaway_winner_user_id) from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd),'@', 1))-1),
+            '***','@',
+            SUBSTRING_INDEX((select (select UU.email from user UU where UU.usr_id =ZZ.giveaway_winner_user_id) from giveaway_winner ZZ where ZZ.giveaway_cd=A.giveaway_cd),'@', -1)) email,
+            (select code.code_name from code where code.code='product_delivery_type' and code.code_value =A.giveaway_delivery_type) as giveaway_delivery_type_name,
+            (select Z.product_made_company_name from product_made_company Z where Z.product_made_company_cd=A.giveaway_made_company_cd) as giveaway_made_company_name,
+            (select code.code_name from code where code.code='product_sale_yn' and code.code_value =A.giveaway_sale_yn) as giveaway_sale_yn_name,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 1) as file_1,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 2) as file_2,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 3) as file_3,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 4) as file_4,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 5) as file_5
+        FROM giveaway A  where 1=1
+        ]]>
+        <if test="searchKeyword!=null and searchKeyword!='' and searchType!=''">
+            <foreach item="item" index="index" collection="searchTypeArr" separator=" OR " open="AND (" close=")">
+                ${item} LIKE CONCAT('%', #{searchKeyword},'%' )
+            </foreach>
+        </if>
+		<if test="giveaway_id != null and giveaway_id != ''"> <![CDATA[AND A.giveaway_id= #{giveway_id} ]]></if>
+        <if test="giveaway_cd != null and giveaway_cd != ''"> <![CDATA[AND A.giveaway_cd= #{giveaway_cd} ]]></if>
+        <if test="giveaway_use_yn != null and giveaway_use_yn != ''"> <![CDATA[AND A.giveaway_use_yn= #{giveaway_use_yn} ]]></if>
+        <if test="giveaway_sale_yn != null and giveaway_sale_yn != ''"> <![CDATA[AND A.giveaway_sale_yn= #{giveaway_sale_yn} ]]></if>
+        <if test="giveaway_name != null and giveaway_name != ''"> <![CDATA[AND A.giveaway_name like CONCAT('%',#{giveaway_name},'%') ]]></if>
+        <!-- <if test="parti_rate == null"> <![CDATA[and  ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) < 100 ]]></if> -->
+        <if test='parti_rate == "1"'> <![CDATA[and  ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) < 100 ]]></if>
+        <if test='parti_rate == "100"'> <![CDATA[and  ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) >= 100 ]]></if>
+        <if test="orderByKey != null"> order by ${orderByKey} ${orderByValue}</if>
+        <if test="orderByKey == null"> order by giveaway_id DESC </if>
+        LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    <select id="getGiveawayListCount" resultType="java.lang.Integer">
+        <![CDATA[
+        SELECT
+            count(*)
+        FROM giveaway A  where 1=1
+        ]]>
+        <if test="giveaway_id != null and giveaway_id != ''"> <![CDATA[AND A.giveaway_id= #{giveway_id} ]]></if>
+        <if test="giveaway_cd != null and giveaway_cd != ''"> <![CDATA[AND A.giveaway_cd= #{giveaway_cd} ]]></if>
+        <if test="giveaway_use_yn != null and giveaway_use_yn != ''"> <![CDATA[AND A.giveaway_use_yn= #{giveaway_use_yn} ]]></if>
+        <if test="giveaway_sale_yn != null and giveaway_sale_yn != ''"> <![CDATA[AND A.giveaway_sale_yn= #{giveaway_sale_yn} ]]></if>
+        <if test="giveaway_name != null and giveaway_name != ''"> <![CDATA[AND A.giveaway_name like CONCAT('%',#{giveaway_name},'%') ]]></if>
+        <!-- <if test="parti_rate == null"> <![CDATA[and  ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) < 100 ]]></if> -->
+        <if test='parti_rate == "1"'> <![CDATA[and  ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) < 100 ]]></if>
+        <if test='parti_rate == "100"'> <![CDATA[and  ifnull((((select sum(Z.giveaway_payment_epoint) from giveaway_play_history Z where Z.giveaway_cd = A.giveaway_cd) / A.giveaway_play_winner_point) * 100) , 0) >= 100 ]]></if>
+    </select>
+    <select id="getUserGiveawayPlayList" resultType="java.util.HashMap">
+        <![CDATA[
+        select
+        A.*, C.*, B.*,
+            (select Z.email from user Z where Z.usr_id = A.giveaway_play_user_id) as email,
+            (select Z.giveaway_detail_image from giveaway Z where Z.giveaway_cd=A.giveaway_cd) as giveaway_detail_image,
+            (select Z.giveaway_brand from giveaway Z where Z.giveaway_cd=A.giveaway_cd) as giveaway_brand,
+            (select Z.giveaway_model_name from giveaway Z where Z.giveaway_cd=A.giveaway_cd) as giveaway_model_name,
+            (select Z.giveaway_name from giveaway Z where Z.giveaway_cd=A.giveaway_cd) as giveaway_name,
+            (select Z.giveaway_cd from giveaway Z where Z.giveaway_cd=A.giveaway_cd) as giveaway_cd,
+            (select Z.giveaway_name from giveaway Z where Z.giveaway_cd=A.giveaway_cd) as product_name,
+            (select Z.reg_date from giveaway_winner Z where Z.giveaway_cd=A.giveaway_cd) as giveaway_winner_reg_date,
+            (select Z.code_name from code Z where Z.code = 'giveaway_play_status' and Z.code_value=A.giveaway_play_status) as giveaway_play_status_name,
+            (select Z.code_name from code Z where Z.code = 'giveaway_payment_status' and Z.code_value=A.giveaway_payment_status) as giveaway_payment_status_name,
+            (select Z.giveaway_winner_user_id from giveaway_winner Z where Z.giveaway_play_id=A.giveaway_play_id ) as winner_id,
+            IFNULL((SELECT Z.code_name FROM code Z WHERE Z.code = 'payment_status' AND Z.code_value = (SELECT payment_status FROM payment Z WHERE Z.order_no = B.order_no)),'결제전') payment_status_name,
+            (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 1) as file_1
+        FROM giveaway_play_history A 
+		LEFT join delivery_info B
+		ON A.giveaway_play_cd = B.giveaway_play_cd
+		LEFT JOIN payment C
+		ON B.order_no = C.order_no
+		where 1=1
+        ]]>
+        <if test="giveaway_play_status != null and giveaway_play_status !=''"><![CDATA[AND A.giveaway_play_status = #{giveaway_play_status} ]]></if>
+        <if test="giveaway_play_id != null"> <![CDATA[AND A.giveaway_play_id= #{giveaway_play_id} ]]></if>
+        <if test="giveaway_cd != null"> <![CDATA[AND giveaway_cd= #{giveaway_cd} ]]></if>
+        <if test="giveaway_play_user_id != null"> <![CDATA[AND giveaway_play_user_id= #{giveaway_play_user_id} ]]></if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        <if test="cast_start_date != null and cast_start_date !=''"><![CDATA[AND (select Z.reg_date from giveaway_winner Z where Z.giveaway_cd=A.giveaway_cd) >= #{cast_start_date} ]]></if>
+        <if test="cast_end_date != null and cast_end_date !=''"><![CDATA[AND (select Z.reg_date from giveaway_winner Z where Z.giveaway_cd=A.giveaway_cd) <= #{cast_end_date} ]]></if>
+        order by A.reg_date desc
+        LIMIT ${rowStart-1}, ${staticRowEnd}
+    </select>
+    <select id="getUserGiveawayPlayListCount" resultType="java.lang.Integer">
+        <![CDATA[
+        SELECT
+            count(*)
+        FROM giveaway_play_history A  where 1=1
+        ]]>
+        <if test="giveaway_play_status != null and giveaway_play_status !=''"><![CDATA[AND A.giveaway_play_status = #{giveaway_play_status} ]]></if>
+        <if test="giveaway_play_id != null"> <![CDATA[AND A.giveaway_play_id= #{giveaway_play_id} ]]></if>
+        <if test="giveaway_cd != null"> <![CDATA[AND giveaway_cd= #{giveaway_cd} ]]></if>
+        <if test="giveaway_play_user_id != null"> <![CDATA[AND giveaway_play_user_id= #{giveaway_play_user_id} ]]></if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+        <if test="cast_start_date != null and cast_start_date !=''"><![CDATA[AND (select Z.reg_date from giveaway_winner Z where Z.giveaway_cd=A.giveaway_cd) >= #{cast_start_date} ]]></if>
+        <if test="cast_end_date != null and cast_end_date !=''"><![CDATA[AND (select Z.reg_date from giveaway_winner Z where Z.giveaway_cd=A.giveaway_cd) <= #{cast_end_date} ]]></if>
+    </select>
+    <insert id="insertGiveaway" parameterType="com.webapp.mall.vo.GiveawayVO">
+
+        insert into giveaway(
+        giveaway_cd,
+        giveaway_market_cd,
+        giveaway_use_yn,
+        giveaway_sale_yn,
+        giveaway_ct,
+        giveaway_new_class,
+        giveaway_md_class,
+        giveaway_name,
+        giveaway_name_en,
+        giveaway_name_mg,
+        giveaway_supply_pd_name,
+        giveaway_model_name,
+        giveaway_summary_memo,
+        giveaway_brief_memo,
+        giveaway_html,
+        giveaway_mobile_memo_config,
+        giveaway_mobile_html,
+        giveaway_keyword,
+        giveaway_tex_class,
+        giveaway_user_payment,
+        giveaway_company_payment,
+        giveaway_payment,
+        giveaway_payment_empty_yn,
+        giveaway_payment_memo,
+        giveaway_order_limit_quantity,
+        giveaway_min_limit,
+        giveaway_max_limit,
+        giveaway_point_rate,
+        giveaway_go_event_yn,
+        giveaway_adult_yn,
+        giveaway_option_yn,
+        giveaway_option_class,
+        giveaway_option_view_type,
+        giveaway_option_set_name,
+        giveaway_option_input,
+        giveaway_option_style,
+        giveaway_option_button_img,
+        giveaway_option_color,
+        giveaway_option_required,
+        giveaway_sold_out_memo,
+        giveaway_add_option,
+        giveaway_add_option_name,
+        giveaway_add_option_required,
+        giveaway_add_option_max_lang,
+        giveaway_detail_image,
+        giveaway_list_image,
+        giveaway_list_image_sm,
+        giveaway_list_image_response,
+        giveaway_add_image,
+        giveaway_made_company_cd,
+        giveaway_supplier,
+        giveaway_brand,
+        giveaway_trend,
+        giveaway_influencer,
+        giveaway_self_class_cd,
+        giveaway_create_date,
+        giveaway_release_date,
+        giveaway_validity_yn,
+        giveaway_validity,
+        giveaway_origin,
+        giveaway_cm,
+        giveaway_payment_info,
+        giveaway_delivery_info,
+        giveaway_change_info,
+        giveaway_service_info,
+        giveaway_delivery_class,
+        giveaway_delivery_type,
+        giveaway_delivery_International_type,
+        giveaway_delivery_locale,
+        giveaway_delivery_payment_type,
+        giveaway_delivery_date,
+        giveaway_delivery_payment_class,
+        giveaway_delivery_payment,
+        giveaway_delivery_store_pickup,
+        giveaway_kg,
+        giveaway_global_hs_code,
+        giveaway_global_clearance,
+        giveaway_material,
+        giveaway_material_en,
+        giveaway_fabric,
+        giveaway_seo_yn,
+        giveaway_seo_title,
+        giveaway_seo_author,
+        giveaway_seo_description,
+        giveaway_seo_keywords,
+        giveaway_seo_alt,
+        giveaway_payment_type,
+        giveaway_delivery_type_code,
+        giveaway_memo,
+        giveaway_point_class,
+        giveaway_point_rate_cash,
+        giveaway_members_limit,
+        giveaway_view_locale_cd,
+        giveaway_play_winner_point,
+        giveaway_definition_key,
+        giveaway_definition_value
+        )
+      VALUES (
+            #{giveaway_cd},
+            #{giveaway_market_cd},
+            #{giveaway_use_yn},
+            #{giveaway_sale_yn},
+            #{giveaway_ct},
+            #{giveaway_new_class},
+            #{giveaway_md_class},
+            #{giveaway_name},
+            #{giveaway_name_en},
+            #{giveaway_name_mg},
+            #{giveaway_supply_pd_name},
+            #{giveaway_model_name},
+            #{giveaway_summary_memo},
+            #{giveaway_brief_memo},
+            #{giveaway_html},
+            #{giveaway_mobile_memo_config},
+            #{giveaway_mobile_html},
+            #{giveaway_keyword},
+            #{giveaway_tex_class},
+            #{giveaway_user_payment},
+            #{giveaway_company_payment},
+            #{giveaway_payment},
+            #{giveaway_payment_empty_yn},
+            #{giveaway_payment_memo},
+            #{giveaway_order_limit_quantity},
+            #{giveaway_min_limit},
+            #{giveaway_max_limit},
+            #{giveaway_point_rate},
+            #{giveaway_go_event_yn},
+            #{giveaway_adult_yn},
+            #{giveaway_option_yn},
+            #{giveaway_option_class},
+            #{giveaway_option_view_type},
+            #{giveaway_option_set_name},
+            #{giveaway_option_input},
+            #{giveaway_option_style},
+            #{giveaway_option_button_img},
+            #{giveaway_option_color},
+            #{giveaway_option_required},
+            #{giveaway_sold_out_memo},
+            #{giveaway_add_option},
+            #{giveaway_add_option_name},
+            #{giveaway_add_option_required},
+            #{giveaway_add_option_max_lang},
+            #{giveaway_detail_image},
+            #{giveaway_list_image},
+            #{giveaway_list_image_sm},
+            #{giveaway_list_image_response},
+            #{giveaway_add_image},
+            #{giveaway_made_company_cd},
+            #{giveaway_supplier},
+            #{giveaway_brand},
+            #{giveaway_trend},
+            #{giveaway_influencer},
+            #{giveaway_self_class_cd},
+            #{giveaway_create_date},
+            #{giveaway_release_date},
+            #{giveaway_validity_yn},
+            #{giveaway_validity},
+            #{giveaway_origin},
+            #{giveaway_cm},
+            #{giveaway_payment_info},
+            #{giveaway_delivery_info},
+            #{giveaway_change_info},
+            #{giveaway_service_info},
+            #{giveaway_delivery_class},
+            #{giveaway_delivery_type},
+            #{giveaway_delivery_International_type},
+            #{giveaway_delivery_locale},
+            #{giveaway_delivery_payment_type},
+            #{giveaway_delivery_date},
+            #{giveaway_delivery_payment_class},
+            #{giveaway_delivery_payment},
+            #{giveaway_delivery_store_pickup},
+            #{giveaway_kg},
+            #{giveaway_global_hs_code},
+            #{giveaway_global_clearance},
+            #{giveaway_material},
+            #{giveaway_material_en},
+            #{giveaway_fabric},
+            #{giveaway_seo_yn},
+            #{giveaway_seo_title},
+            #{giveaway_seo_author},
+            #{giveaway_seo_description},
+            #{giveaway_seo_keywords},
+            #{giveaway_seo_alt},
+            #{giveaway_payment_type},
+            #{giveaway_delivery_type_code},
+            #{giveaway_memo},
+            #{giveaway_point_class},
+            #{giveaway_point_rate_cash},
+            #{giveaway_members_limit},
+            #{giveaway_view_locale_cd},
+            #{giveaway_play_winner_point},
+            #{giveaway_definition_key},
+        	#{giveaway_definition_value}
+        )
+
+
+    </insert>
+    <insert id="insertGiveawayCopy" parameterType="java.util.Map">
+        insert into giveaway (
+        giveaway_cd,
+        giveaway_market_cd,
+        giveaway_use_yn,
+        giveaway_sale_yn,
+        giveaway_ct,
+        giveaway_new_class,
+        giveaway_md_class,
+        giveaway_name,
+        giveaway_name_en,
+        giveaway_name_mg,
+        giveaway_supply_pd_name,
+        giveaway_model_name,
+        giveaway_summary_memo,
+        giveaway_brief_memo,
+        giveaway_html,
+        giveaway_mobile_memo_config,
+        giveaway_mobile_html,
+        giveaway_keyword,
+        giveaway_tex_class,
+        giveaway_user_payment,
+        giveaway_company_payment,
+        giveaway_payment,
+        giveaway_payment_empty_yn,
+        giveaway_payment_memo,
+        giveaway_order_limit_quantity,
+        giveaway_min_limit,
+        giveaway_max_limit,
+        giveaway_point_rate,
+        giveaway_go_event_yn,
+        giveaway_adult_yn,
+        giveaway_option_yn,
+        giveaway_option_class,
+        giveaway_option_view_type,
+        giveaway_option_set_name,
+        giveaway_option_input,
+        giveaway_option_style,
+        giveaway_option_button_img,
+        giveaway_option_color,
+        giveaway_option_required,
+        giveaway_sold_out_memo,
+        giveaway_add_option,
+        giveaway_add_option_name,
+        giveaway_add_option_required,
+        giveaway_add_option_max_lang,
+        giveaway_detail_image,
+        giveaway_list_image,
+        giveaway_list_image_sm,
+        giveaway_list_image_response,
+        giveaway_add_image,
+        giveaway_made_company_cd,
+        giveaway_supplier,
+        giveaway_brand,
+        giveaway_trend,
+        giveaway_influencer,
+        giveaway_self_class_cd,
+        giveaway_create_date,
+        giveaway_release_date,
+        giveaway_validity_yn,
+        giveaway_validity,
+        giveaway_origin,
+        giveaway_cm,
+        giveaway_payment_info,
+        giveaway_delivery_info,
+        giveaway_change_info,
+        giveaway_service_info,
+        giveaway_delivery_class,
+        giveaway_delivery_type,
+        giveaway_delivery_International_type,
+        giveaway_delivery_locale,
+        giveaway_delivery_payment_type,
+        giveaway_delivery_date,
+        giveaway_delivery_payment_class,
+        giveaway_delivery_payment,
+        giveaway_delivery_store_pickup,
+        giveaway_kg,
+        giveaway_global_hs_code,
+        giveaway_global_clearance,
+        giveaway_material,
+        giveaway_material_en,
+        giveaway_fabric,
+        giveaway_seo_yn,
+        giveaway_seo_title,
+        giveaway_seo_author,
+        giveaway_seo_description,
+        giveaway_seo_keywords,
+        giveaway_seo_alt,
+        giveaway_payment_type,
+        giveaway_delivery_type_code,
+        giveaway_memo,
+        giveaway_point_class,
+        giveaway_point_rate_cash,
+        giveaway_members_limit,
+        giveaway_view_locale_cd,
+        giveaway_play_winner_point,
+        giveaway_definition_key,
+        giveaway_definition_value
+        )
+        select
+        #{giveaway_cd},
+        giveaway_market_cd,
+        giveaway_use_yn,
+        giveaway_sale_yn,
+        giveaway_ct,
+        giveaway_new_class,
+        giveaway_md_class,
+        giveaway_name,
+        giveaway_name_en,
+        giveaway_name_mg,
+        giveaway_supply_pd_name,
+        giveaway_model_name,
+        giveaway_summary_memo,
+        giveaway_brief_memo,
+        giveaway_html,
+        giveaway_mobile_memo_config,
+        giveaway_mobile_html,
+        giveaway_keyword,
+        giveaway_tex_class,
+        giveaway_user_payment,
+        giveaway_company_payment,
+        giveaway_payment,
+        giveaway_payment_empty_yn,
+        giveaway_payment_memo,
+        giveaway_order_limit_quantity,
+        giveaway_min_limit,
+        giveaway_max_limit,
+        giveaway_point_rate,
+        giveaway_go_event_yn,
+        giveaway_adult_yn,
+        giveaway_option_yn,
+        giveaway_option_class,
+        giveaway_option_view_type,
+        giveaway_option_set_name,
+        giveaway_option_input,
+        giveaway_option_style,
+        giveaway_option_button_img,
+        giveaway_option_color,
+        giveaway_option_required,
+        giveaway_sold_out_memo,
+        giveaway_add_option,
+        giveaway_add_option_name,
+        giveaway_add_option_required,
+        giveaway_add_option_max_lang,
+        giveaway_detail_image,
+        giveaway_list_image,
+        giveaway_list_image_sm,
+        giveaway_list_image_response,
+        giveaway_add_image,
+        giveaway_made_company_cd,
+        giveaway_supplier,
+        giveaway_brand,
+        giveaway_trend,
+        giveaway_influencer,
+        giveaway_self_class_cd,
+        giveaway_create_date,
+        giveaway_release_date,
+        giveaway_validity_yn,
+        giveaway_validity,
+        giveaway_origin,
+        giveaway_cm,
+        giveaway_payment_info,
+        giveaway_delivery_info,
+        giveaway_change_info,
+        giveaway_service_info,
+        giveaway_delivery_class,
+        giveaway_delivery_type,
+        giveaway_delivery_International_type,
+        giveaway_delivery_locale,
+        giveaway_delivery_payment_type,
+        giveaway_delivery_date,
+        giveaway_delivery_payment_class,
+        giveaway_delivery_payment,
+        giveaway_delivery_store_pickup,
+        giveaway_kg,
+        giveaway_global_hs_code,
+        giveaway_global_clearance,
+        giveaway_material,
+        giveaway_material_en,
+        giveaway_fabric,
+        giveaway_seo_yn,
+        giveaway_seo_title,
+        giveaway_seo_author,
+        giveaway_seo_description,
+        giveaway_seo_keywords,
+        giveaway_seo_alt,
+        giveaway_payment_type,
+        giveaway_delivery_type_code,
+        giveaway_memo,
+        giveaway_point_class,
+        giveaway_point_rate_cash,
+        giveaway_members_limit,
+        giveaway_view_locale_cd,
+        giveaway_play_winner_point,
+        giveaway_definition_key,
+        giveaway_definition_value
+         from giveaway where giveaway_cd = #{request_giveaway_cd}
+
+    </insert>
+    <insert id="insertGiveawayFileCopy" parameterType="java.util.Map">
+        insert into product_file (key_id,file_name,real_name,file_size,file_link,file_order)
+        select #{giveaway_cd},file_name,real_name,file_size,file_link,file_order from product_file where key_id =#{request_giveaway_cd}
+    </insert>
+    <insert id="insertGiveawayPlay" parameterType="com.webapp.mall.vo.GiveawayVO">
+
+       <![CDATA[
+        insert into giveaway_play_history(
+        giveaway_cd,
+        giveaway_payment_epoint,
+        giveaway_play_user_id,
+        giveaway_play_cd
+        )
+      VALUES (
+        #{giveaway_cd},
+        #{giveaway_payment_epoint},
+        #{giveaway_play_user_id},
+        #{giveaway_play_cd}
+        )
+        ]]>
+
+    </insert>
+    <update id="updateGiveaway" parameterType="java.util.Map">
+    update giveaway
+    set
+        giveaway_market_cd=#{giveaway_market_cd},
+        giveaway_use_yn=#{giveaway_use_yn},
+        giveaway_sale_yn=#{giveaway_sale_yn},
+        giveaway_ct=#{giveaway_ct},
+        giveaway_new_class=#{giveaway_new_class},
+        giveaway_md_class=#{giveaway_md_class},
+        giveaway_name=#{giveaway_name},
+        giveaway_name_en=#{giveaway_name_en},
+        giveaway_name_mg=#{giveaway_name_mg},
+        giveaway_supply_pd_name=#{giveaway_supply_pd_name},
+        giveaway_model_name=#{giveaway_model_name},
+        giveaway_summary_memo=#{giveaway_summary_memo},
+        giveaway_brief_memo=#{giveaway_brief_memo},
+        giveaway_html=#{giveaway_html},
+        giveaway_mobile_memo_config=#{giveaway_mobile_memo_config},
+        giveaway_mobile_html=#{giveaway_mobile_html},
+        giveaway_keyword=#{giveaway_keyword},
+        giveaway_tex_class=#{giveaway_tex_class},
+        giveaway_user_payment=#{giveaway_user_payment},
+        giveaway_company_payment=#{giveaway_company_payment},
+        giveaway_payment=#{giveaway_payment},
+        giveaway_payment_empty_yn=#{giveaway_payment_empty_yn},
+        giveaway_payment_memo=#{giveaway_payment_memo},
+        giveaway_order_limit_quantity=#{giveaway_order_limit_quantity},
+        giveaway_min_limit=#{giveaway_min_limit},
+        giveaway_max_limit=#{giveaway_max_limit},
+        giveaway_point_rate=#{giveaway_point_rate},
+        giveaway_go_event_yn=#{giveaway_go_event_yn},
+        giveaway_adult_yn=#{giveaway_adult_yn},
+        giveaway_option_yn=#{giveaway_option_yn},
+        giveaway_option_class=#{giveaway_option_class},
+        giveaway_option_view_type=#{giveaway_option_view_type},
+        giveaway_option_set_name=#{giveaway_option_set_name},
+        giveaway_option_input=#{giveaway_option_input},
+        giveaway_option_style=#{giveaway_option_style},
+        giveaway_option_button_img=#{giveaway_option_button_img},
+        giveaway_option_color=#{giveaway_option_color},
+        giveaway_option_required=#{giveaway_option_required},
+        giveaway_sold_out_memo=#{giveaway_sold_out_memo},
+        giveaway_add_option=#{giveaway_add_option},
+        giveaway_add_option_name=#{giveaway_add_option_name},
+        giveaway_add_option_required=#{giveaway_add_option_required},
+        giveaway_add_option_max_lang=#{giveaway_add_option_max_lang},
+        giveaway_detail_image=#{giveaway_detail_image},
+        giveaway_list_image=#{giveaway_list_image},
+        giveaway_list_image_sm=#{giveaway_list_image_sm},
+        giveaway_list_image_response=#{giveaway_list_image_response},
+        giveaway_add_image=#{giveaway_add_image},
+        giveaway_made_company_cd=#{giveaway_made_company_cd},
+        giveaway_supplier=#{giveaway_supplier},
+        giveaway_brand=#{giveaway_brand},
+        giveaway_trend=#{giveaway_trend},
+        giveaway_influencer=#{giveaway_influencer},
+        giveaway_self_class_cd=#{giveaway_self_class_cd},
+        giveaway_create_date=#{giveaway_create_date},
+        giveaway_release_date=#{giveaway_release_date},
+        giveaway_validity_yn=#{giveaway_validity_yn},
+        giveaway_validity=#{giveaway_validity},
+        giveaway_origin=#{giveaway_origin},
+        giveaway_cm=#{giveaway_cm},
+        giveaway_payment_info=#{giveaway_payment_info},
+        giveaway_delivery_info=#{giveaway_delivery_info},
+        giveaway_change_info=#{giveaway_change_info},
+        giveaway_service_info=#{giveaway_service_info},
+        giveaway_delivery_class=#{giveaway_delivery_class},
+        giveaway_delivery_type=#{giveaway_delivery_type},
+        giveaway_delivery_International_type=#{giveaway_delivery_International_type},
+        giveaway_delivery_locale=#{giveaway_delivery_locale},
+        giveaway_delivery_payment_type=#{giveaway_delivery_payment_type},
+        giveaway_delivery_date=#{giveaway_delivery_date},
+        giveaway_delivery_payment_class=#{giveaway_delivery_payment_class},
+        giveaway_delivery_payment=#{giveaway_delivery_payment},
+        giveaway_delivery_store_pickup=#{giveaway_delivery_store_pickup},
+        giveaway_kg=#{giveaway_kg},
+        giveaway_global_hs_code=#{giveaway_global_hs_code},
+        giveaway_global_clearance=#{giveaway_global_clearance},
+        giveaway_material=#{giveaway_material},
+        giveaway_material_en=#{giveaway_material_en},
+        giveaway_fabric=#{giveaway_fabric},
+        giveaway_seo_yn=#{giveaway_seo_yn},
+        giveaway_seo_title=#{giveaway_seo_title},
+        giveaway_seo_author=#{giveaway_seo_author},
+        giveaway_seo_description=#{giveaway_seo_description},
+        giveaway_seo_keywords=#{giveaway_seo_keywords},
+        giveaway_seo_alt=#{giveaway_seo_alt},
+        giveaway_payment_type=#{giveaway_payment_type},
+        giveaway_delivery_type_code=#{giveaway_delivery_type_code},
+        giveaway_memo=#{giveaway_memo},
+        giveaway_point_class=#{giveaway_point_class},
+        giveaway_point_rate_cash=#{giveaway_point_rate_cash},
+        giveaway_members_limit=#{giveaway_members_limit},
+        giveaway_view_locale_cd=#{giveaway_view_locale_cd},
+        giveaway_play_winner_point=#{giveaway_play_winner_point},
+        giveaway_play_max_point=#{giveaway_play_max_point},
+        giveaway_play_min_point=#{giveaway_play_min_point},
+        giveaway_definition_key = #{giveaway_definition_key},
+        giveaway_definition_value = #{giveaway_definition_value}
+     WHERE giveaway_cd = #{giveaway_cd}
+    </update>
+    <delete id="deleteGiveaway" parameterType="java.util.Map">
+        <foreach collection="list" item="item" separator=";" open="DECLARE BEGIN" close="; END;">
+        <![CDATA[
+        delete giveaway where giveaway_id = #{item.giveaway_id}
+        ]]>
+        </foreach>
+    </delete>
+    <delete id="deleteGiveawayPlayHistory" parameterType="java.util.Map">
+        <foreach collection="list" item="item" separator=";" open="DECLARE BEGIN" close="; END;">
+            <![CDATA[
+        delete giveaway_play_history where giveaway_play_id = #{item.giveaway_play_id}
+        ]]>
+        </foreach>
+    </delete>
+    <select id="getGiveawayPlaySumPoint" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select IFNULL(sum(A.giveaway_payment_epoint),0)  from giveaway_play_history A where 1=1
+        <if test="giveaway_cd != null"> <![CDATA[AND A.giveaway_cd= #{giveaway_cd} ]]></if>
+    </select>
+    <select id="getGiveawayPlayUserRandId" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select IFNULL(giveaway_play_id,0) from giveaway_play_history where giveaway_play_status !='W' and giveaway_cd=#{giveaway_cd} order by rand() limit 1
+    </select>
+    <update id="updateWinnerUser" parameterType="java.util.Map">
+        update giveaway_play_history set giveaway_play_status = 'W' where giveaway_play_id=#{giveaway_play_id} and giveaway_cd=#{giveaway_cd}
+    </update>
+    <insert id="insertGiveawayWinner" parameterType="java.util.Map">
+        insert into giveaway_winner(
+        giveaway_id,
+        giveaway_cd,
+        giveaway_play_id,
+        giveaway_winner_user_id
+        )values(
+         #{giveaway_id},
+         #{giveaway_cd},
+         #{giveaway_play_id},
+         #{giveaway_winner_user_id}
+
+        )
+    </insert>
+
+    <select id="getGiveawayStatusCount" resultType="java.util.HashMap" parameterType="java.util.Map" >
+        SELECT SUM(IF(A.giveaway_play_status = 'I',1,0)) iCnt,
+                SUM(IF(A.giveaway_play_status = 'F',1,0)) fCnt,
+                SUM(IF(A.giveaway_play_status = 'W',1,0)) wCnt
+        FROM giveaway_play_history A
+        WHERE 1=1
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= #{start_date} ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= #{end_date} ]]></if>
+    </select>
+
+	<insert id="insertGiveawayHistory" parameterType="hashmap">
+    	INSERT INTO giveaway_history(
+			giveaway_prev,
+			giveaway_current,
+			usr_id
+		)VALUES(
+			#{giveaway_prev},
+			#{giveaway_current},
+			#{usr_id}
+		)
+    </insert>
+    
+    <update id="updateGiveawayHistory" parameterType="hashmap">
+	    UPDATE giveaway_history SET 
+			giveaway_next = #{giveaway_next},
+			update_date = SYSDATE()
+		WHERE usr_id = #{usr_id}
+		AND giveaway_current = #{giveaway_current}
+		ORDER BY reg_date DESC
+		LIMIT 1
+    </update>
+    
+    <select id="relatedGiveawayList" parameterType="hashmap" resultType="hashmap">
+    	SELECT *,
+    		(select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 1) as file_1
+		FROM giveaway A
+		WHERE 
+       	<foreach collection="product_cts" item="item" separator="OR" open="(" close=")">
+        		<![CDATA[FIND_IN_SET(#{item},replace(A.giveaway_ct,'|',',')) ]]>
+       	</foreach>
+		ORDER BY reg_date DESC
+		LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+    
+    <select id="serialGiveawayList" parameterType="hashmap" resultType="hashmap">
+    	SELECT A.*,
+			   (select Z.file_link from product_file Z where Z.key_id = A.giveaway_cd and Z.file_order = 1) as file_1
+		FROM giveaway A
+		JOIN giveaway_history B
+		ON B.giveaway_current = A.giveaway_id
+		WHERE (B.giveaway_prev = #{giveaway_id}
+		OR B.giveaway_next = #{giveaway_id})
+		AND B.giveaway_current != #{giveaway_id}
+		GROUP BY B.giveaway_current
+		ORDER BY COUNT(B.giveaway_current) DESC
+		LIMIT ${rowStart-1}, ${displayRowCount}
+    </select>
+</mapper>

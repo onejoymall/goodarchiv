@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="mall.CouponMapper">
+
+    <select id="getCouponList" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+          *
+        FROM coupon A  where 1=1
+        AND SYSDATE() BETWEEN A.coupon_valid_date_start AND date_add(A.coupon_valid_date_end, INTERVAL 1 DAY)
+		AND (A.coupon_issue_date IS NULL OR SYSDATE() > A.coupon_issue_date)
+        ]]>
+		<if test="coupon_paid_id != null and coupon_paid_id !=''"> <![CDATA[AND A.coupon_paid_id= #{coupon_id} ]]></if>
+		<if test="coupon_condition != null and coupon_condition !=''"> <![CDATA[AND A.coupon_condition= #{coupon_condition} ]]></if>
+		<if test="login_alert_yn != null and login_alert_yn !=''"> <![CDATA[AND A.login_alert_yn= #{login_alert_yn} ]]></if>
+		<if test="email_alert_yn != null and email_alert_yn !=''"> <![CDATA[AND A.email_alert_yn= #{email_alert_yn} ]]></if>
+		<if test="sms_alert_yn != null and sms_alert_yn !=''"> <![CDATA[AND A.sms_alert_yn= #{sms_alert_yn} ]]></if>
+        <if test="coupon_cd != null and coupon_cd != ''"> <![CDATA[AND coupon_cd= #{coupon_cd} ]]></if>
+        <if test="coupon_ct != null and coupon_ct != ''">
+        	<foreach collection="coupon_ct" item="item" separator="OR" open="AND (" close=")">
+         		<![CDATA[FIND_IN_SET(#{item},replace(B.coupon_ct,'|',',')) ]]>
+        	</foreach>
+        </if>
+        <if test="coupon_name != null and coupon_name != ''"> <![CDATA[AND coupon_name like CONCAT('%',#{coupon_name},'%') ]]></if>
+        <if test="start_date != null and start_date != ''"><![CDATA[AND A.reg_date >= #{start_date} ]]></if>
+        <if test="end_date != null and end_date != ''"><![CDATA[AND A.reg_date < #{end_date} ]]></if>
+        <if test="coupon_paid_class_cd != null and coupon_paid_class_cd != ''"> <![CDATA[AND A.coupon_paid_class_cd= #{coupon_paid_class_cd} ]]></if>
+        <if test="coupon_paid_user_id != null and coupon_paid_user_id != ''"> <![CDATA[AND A.coupon_paid_user_id= #{coupon_paid_user_id} ]]></if>
+        <if test="coupon_use_range != null and coupon_use_range != ''"> <![CDATA[AND B.coupon_use_range= #{coupon_use_range} ]]></if>
+    </select>
+    <select id="getCouponListCount" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM coupon  where 1=1
+        AND SYSDATE() BETWEEN A.coupon_valid_date_start AND date_add(A.coupon_valid_date_end, INTERVAL 1 DAY)
+		AND (A.coupon_issue_date IS NULL OR SYSDATE() > A.coupon_issue_date)
+        ]]>
+		<if test="coupon_paid_id != null and coupon_paid_id !=''"> <![CDATA[AND A.coupon_paid_id= #{coupon_id} ]]></if>
+        <if test="coupon_cd != null and coupon_cd != ''"> <![CDATA[AND coupon_cd= #{coupon_cd} ]]></if>
+        <if test="coupon_ct != null and coupon_ct != ''">
+        	<foreach collection="coupon_ct" item="item" separator="OR" open="AND (" close=")">
+         		<![CDATA[FIND_IN_SET(#{item},replace(B.coupon_ct,'|',',')) ]]>
+        	</foreach>
+        </if>
+        <if test="coupon_name != null and coupon_name != ''"> <![CDATA[AND coupon_name like CONCAT('%',#{coupon_name},'%') ]]></if>
+        <if test="start_date != null and start_date != ''"><![CDATA[AND A.reg_date >= #{start_date} ]]></if>
+        <if test="end_date != null and end_date != ''"><![CDATA[AND A.reg_date < #{end_date} ]]></if>
+        <if test="coupon_paid_class_cd != null and coupon_paid_class_cd != ''"> <![CDATA[AND A.coupon_paid_class_cd= #{coupon_paid_class_cd} ]]></if>
+        <if test="coupon_paid_user_id != null and coupon_paid_user_id != ''"> <![CDATA[AND A.coupon_paid_user_id= #{coupon_paid_user_id} ]]></if>
+        <if test="coupon_use_range != null and coupon_use_range != ''"> <![CDATA[AND B.coupon_use_range= #{coupon_use_range} ]]></if>
+    </select>
+    <select id="getUserDownloadCouponList" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT *,
+        (SELECT GROUP_CONCAT(Z.pd_category_name) FROM product_category Z WHERE find_in_set(Z.pd_category_id,replace(A.coupon_ct,'|',','))) category_name
+		FROM coupon A
+		WHERE A.coupon_cd NOT IN (SELECT Z.coupon_cd FROM coupon_paid_history Z WHERE Z.coupon_paid_user_id = #{coupon_paid_user_id})
+		AND SYSDATE() BETWEEN A.coupon_valid_date_start AND date_add(A.coupon_valid_date_end, INTERVAL 1 DAY)
+		AND (A.coupon_issue_date IS NULL OR SYSDATE() > A.coupon_issue_date)
+		AND A.coupon_condition NOT IN ('T','L','M')
+        ]]>
+    </select>
+    <select id="getUserDownloadCouponListCount" resultType="Integer">
+        <![CDATA[
+        SELECT ifnull(count(*),0) cnt
+		FROM coupon A
+		WHERE A.coupon_cd NOT IN (SELECT Z.coupon_cd FROM coupon_paid_history Z WHERE Z.coupon_paid_user_id = #{coupon_paid_user_id})
+		AND SYSDATE() BETWEEN A.coupon_valid_date_start AND date_add(A.coupon_valid_date_end, INTERVAL 1 DAY)
+		AND (A.coupon_issue_date IS NULL OR SYSDATE() > A.coupon_issue_date)
+		AND A.coupon_condition NOT IN ('T','L','M')
+        ]]>
+
+    </select>
+    <select id="getUserCouponList" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.*,
+			B.*,
+			(SELECT GROUP_CONCAT(Z.pd_category_name) FROM product_category Z WHERE find_in_set(Z.pd_category_id,replace(B.coupon_ct,'|',','))) category_name
+        FROM coupon_paid_history A  
+        JOIN coupon B
+        ON A.coupon_cd = B.coupon_cd
+        where 1=1
+        AND A.coupon_use_yn = 'N'
+        AND SYSDATE() BETWEEN B.coupon_valid_date_start AND date_add(B.coupon_valid_date_end, INTERVAL 1 DAY)
+		AND (B.coupon_issue_date IS NULL OR SYSDATE() > B.coupon_issue_date)
+        ]]>
+		<if test="product_payment != null and product_payment !=''"> AND if(B.coupon_use_min_amount IS NULL,1,#{product_payment} >= B.coupon_use_min_amount)</if>
+        <if test="coupon_cd != null and coupon_cd != ''"> <![CDATA[AND coupon_cd= #{coupon_cd} ]]></if>
+        <if test="coupon_ct != null and coupon_ct != ''">
+        	<foreach collection="coupon_ct" item="item" separator="OR" open="AND (" close=")">
+         		<![CDATA[FIND_IN_SET(#{item},replace(B.coupon_ct,'|',',')) ]]>
+        	</foreach>
+        </if>
+        <if test="coupon_name != null and coupon_name != ''"> <![CDATA[AND coupon_name like CONCAT('%',#{coupon_name},'%') ]]></if>
+        <if test="start_date != null and start_date != ''"><![CDATA[AND A.reg_date >= #{start_date} ]]></if>
+        <if test="end_date != null and end_date != ''"><![CDATA[AND A.reg_date < #{end_date} ]]></if>
+        <if test="coupon_paid_class_cd != null and coupon_paid_class_cd != ''"> <![CDATA[AND A.coupon_paid_class_cd= #{coupon_paid_class_cd} ]]></if>
+        <![CDATA[AND A.coupon_paid_user_id= #{coupon_paid_user_id} ]]>
+        <if test="coupon_use_range != null and coupon_use_range != ''"> <![CDATA[AND B.coupon_use_range= #{coupon_use_range} ]]></if>
+    </select>
+    <select id="getUserCouponListCount" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM coupon_paid_history A  
+        JOIN coupon B
+        ON A.coupon_cd = B.coupon_cd
+        where 1=1
+        AND A.coupon_use_yn = 'N'
+        AND SYSDATE() BETWEEN B.coupon_valid_date_start AND date_add(B.coupon_valid_date_end, INTERVAL 1 DAY)
+		AND (B.coupon_issue_date IS NULL OR SYSDATE() > B.coupon_issue_date)
+        ]]>
+
+        <if test="coupon_cd != null and coupon_cd != ''"> <![CDATA[AND coupon_cd= #{coupon_cd} ]]></if>
+        <if test="coupon_ct != null and coupon_ct != ''">
+        	<foreach collection="coupon_ct" item="item" separator="OR" open="AND (" close=")">
+         		<![CDATA[FIND_IN_SET(#{item},replace(B.coupon_ct,'|',',')) ]]>
+        	</foreach>
+        </if>
+        <if test="coupon_name != null and coupon_name != ''"> <![CDATA[AND coupon_name like CONCAT('%',#{coupon_name},'%') ]]></if>
+        <if test="start_date != null and start_date != ''"><![CDATA[AND A.reg_date >= #{start_date} ]]></if>
+        <if test="end_date != null and end_date != ''"><![CDATA[AND A.reg_date < #{end_date} ]]></if>
+        <if test="coupon_paid_class_cd != null and coupon_paid_class_cd != ''"> <![CDATA[AND A.coupon_paid_class_cd= #{coupon_paid_class_cd} ]]></if>
+        <![CDATA[AND A.coupon_paid_user_id= #{coupon_paid_user_id} ]]>
+        <if test="coupon_condition != null and coupon_condition != ''"> <![CDATA[AND A.coupon_condition= #{coupon_condition} ]]></if>
+    </select>
+    <select id="getCouponDetail" resultType="java.util.HashMap" parameterType="java.util.HashMap">
+        SELECT *
+        from coupon A
+        where A.coupon_cd = #{coupon_cd}
+    </select>
+
+    <insert id="insertCoupon" parameterType="hashmap">
+        <![CDATA[
+		 insert into coupon_paid_history(
+			  coupon_cd,
+			  coupon_paid_user_id) 
+		  VALUES (
+			  #{coupon_cd},
+			  #{coupon_paid_user_id}
+		  )
+        ]]>
+    </insert>
+    <insert id="insertCouponPaidHistory" parameterType="String">
+        <![CDATA[
+        insert into coupon_paid_history(
+        coupon_id,coupon_paid_user_id,coupon_paid_class_cd)
+      VALUES (
+        #{coupon_id},
+        #{coupon_paid_user_id},
+        #{coupon_paid_class_cd}
+        )
+        ]]>
+    </insert>
+    <update id="updateCouponHistory" parameterType="java.util.Map">
+        UPDATE coupon_paid_history SET
+			coupon_use_yn = #{coupon_use_yn},
+			use_date = sysdate()
+		WHERE coupon_paid_user_id in (SELECT ZZ.payment_user_id FROM payment_bundle Z JOIN payment ZZ ON Z.order_no = ZZ.order_no WHERE Z.order_no = #{order_no})
+		AND coupon_cd in (SELECT Z.coupon_cd FROM payment_bundle Z JOIN payment ZZ ON Z.order_no = ZZ.order_no WHERE Z.order_no = #{order_no})
+    </update>
+    <delete id="deleteCoupon" parameterType="java.util.Map">
+        <foreach collection="list" item="item" separator=";" open="DECLARE BEGIN" close="; END;">
+        <![CDATA[
+        delete coupon where coupon_id = #{item.coupon_id}
+        ]]>
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="mall.MyPageMapper">
+	<select id="getUserPaymentStatusCount" parameterType="hashmap" resultType="hashmap">
+		SELECT ifnull(sum(A.payment_status = 'M'),0) as mCnt,
+				 ifnull(sum(A.payment_status = 'w'),0) as wCnt,
+				 ifnull(sum(A.payment_status IN ('I')),0) as iCnt,
+				 ifnull(sum(A.payment_status = 'R'),0) as rCnt,
+				 ifnull(sum(A.payment_status = 'O'),0) as oCnt
+		FROM payment A
+		WHERE A.payment_user_id = #{payment_user_id}
+		and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+	</select>
+    <select id="getPaymentListChk" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+          A.*
+        FROM payment A where imp_uid=#{imp_uid} AND password = #{password}
+        ]]>
+    </select>
+
+    <select id="getMyPagePaymentList" parameterType="com.webapp.mall.vo.MyPageVO" resultType="java.util.HashMap">
+    <![CDATA[
+        SELECT
+        	IF(A.product_order_name is not null,A.product_order_name,B.product_name) as product_name,
+        	A.order_no,
+        	A.reg_date,
+        	A.payment_order_quantity,
+        	A.payment,
+        	A.payment_status,
+        	B.product_cd,
+            B.product_payment,
+		 	C.giveaway_cd,
+            C.giveaway_id,
+            C.giveaway_payment,
+            (select Z.username from user Z where Z.usr_id=A.payment_user_id) as username,
+            (select Z.email from user Z where Z.usr_id=A.payment_user_id) as email,
+            (select Z.delivery_start_date from delivery_info Z where Z.order_no=A.order_no) as delivery_start_date,
+            (select Z.delivery_t_code from delivery_info Z where Z.order_no=A.order_no) as delivery_t_code,
+            (select Z.delivery_t_invoice from delivery_info Z where Z.order_no=A.order_no) as delivery_t_invoice,
+            (SELECT Z.store_name FROM store Z where Z.supplier_cd = B.product_supplier) as product_made_company_name,
+            (select Z.code_name from code Z where Z.code='payment_status' and Z.code_value = A.payment_status) as payment_status_name,
+            (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 1) as file_1,
+            (select Z.review_id from product_review Z where Z.order_no = A.order_no) as review_id,
+            (select D.order_user_email from delivery_info D where A.order_no = D.order_no) as order_user_email,
+            (select D.order_user_name from delivery_info D where A.order_no = D.order_no) as order_user_name,
+            (select D.delivery_user_name from delivery_info D where A.order_no = D.order_no) as delivery_user_name
+        FROM payment A left join product B on (B.product_cd = A.product_cd)
+        left join giveaway C on (C.giveaway_cd = A.giveaway_cd)
+        where 1=1
+        and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+        ]]>
+		<if test="payment_status != null and payment_status !=''"><![CDATA[AND A.payment_status = #{payment_status} ]]></if>
+        <if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+      	<if test="payment_user_id != null"> <![CDATA[AND A.payment_user_id= ${payment_user_id} ]]></if>
+		<if test="rowStart > 0"><![CDATA[ order by A.reg_date desc LIMIT ${rowStart-1}, ${displayRowCount} ]]></if>
+    </select>
+    <select id="getMyPagePaymentListCount" parameterType="com.webapp.mall.vo.MyPageVO" resultType="Integer">
+        <![CDATA[
+        SELECT
+            count(*) as cnt
+        FROM payment A  left join product B on (B.product_cd = A.product_cd) where 1=1
+        and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+        ]]>
+
+		<if test="payment_status != null and payment_status !=''"><![CDATA[AND A.payment_status = #{payment_status} ]]></if>
+		<if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= date_format(#{start_date},'%y-%m-%d 00:00:00') ]]></if>
+		<if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= date_format(date_add(#{end_date},interval 1 day),'%y-%m-%d 00:00:00') ]]></if>
+		<if test="payment_user_id != null"> <![CDATA[AND A.payment_user_id= ${payment_user_id} ]]></if>
+    </select>
+    <select id="getMyPagePaymentDetail" parameterType="com.webapp.mall.vo.MyPageVO" resultType="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.*,B.*,C.*,
+            (select Z.username from user Z where Z.usr_id=A.payment_user_id) as username,
+            (select Z.email from user Z where Z.usr_id=A.payment_user_id) as email,
+            (select Z.delivery_start_date from delivery_info Z where Z.order_no=A.order_no) as delivery_start_date,
+            (select Z.delivery_t_code from delivery_info Z where Z.order_no=A.order_no) as delivery_t_code,
+            (select Z.delivery_t_invoice from delivery_info Z where Z.order_no=A.order_no) as delivery_t_invoice,
+            (select Z.delivery_status from delivery_info Z where Z.order_no=A.order_no) as delivery_status,
+            (select Z.code_name from code Z where Z.code='payment_status' and Z.code_value = A.payment_status) as payment_status_name,
+            (SELECT Z.store_name FROM store Z where Z.supplier_cd = B.product_supplier) as product_made_company_name,
+            (select Z.code_name from code Z where Z.code = 'product_payment_type' AND Z.code_value = A.pay_method) as pay_method_name,
+            (select D.order_user_email from delivery_info D where A.order_no = D.order_no) as order_user_email,
+            (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 1) as file_1,
+            (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 2) as file_2,
+            (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 3) as file_3,
+            (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 4) as file_4,
+            (select Z.file_link from product_file Z where Z.key_id = A.product_cd and Z.file_order = 5) as file_5,
+            (select Z.file_link from product_file Z where Z.key_id = C.giveaway_cd and Z.file_order = 1) as file_6,
+            (select D.order_user_name from delivery_info D where A.order_no = D.order_no) as order_user_name,
+            (select D.delivery_user_name from delivery_info D where A.order_no = D.order_no) as delivery_user_name,
+            (select D.postcode from delivery_info D where A.order_no = D.order_no) as postcode,
+            (select D.roadAddress from delivery_info D where A.order_no = D.order_no) as roadAddress,
+            (select D.extraAddress from delivery_info D where A.order_no = D.order_no) as extraAddress
+        FROM payment A left join product B on (B.product_cd = A.product_cd) left join giveaway C on (C.giveaway_cd = A.giveaway_cd) where 1=1
+        and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+        ]]>
+        <if test="payment_user_id != null"> <![CDATA[AND A.payment_user_id= #{payment_user_id} ]]></if>
+        <if test="merchant_uid != null"> <![CDATA[AND A.merchant_uid= #{merchant_uid} ]]></if>
+        <if test="order_no != null"> <![CDATA[AND A.order_no= #{order_no} ]]></if>
+        <if test="imp_uid != null">AND A.imp_uid=#{imp_uid}</if>
+        <if test="password != null">AND A.password = #{password}</if>
+    </select>
+
+
+    <select id="getTodaySummary" resultType="java.util.HashMap" parameterType="java.util.Map" >
+	    SELECT IFNULL(COUNT(*),0) orderCnt,
+				IFNULL(COUNT(*),0) - IFNULL(SUM(A.payment_status IN ('C','G','M')),0) payCnt,
+				IFNULL(SUM(A.payment_status ='C'),0) refundCnt,
+				SUM(IFNULL(payment,0)) orderTotal, 
+				SUM(IFNULL(A.payment,0))-SUM(IFNULL(IF(A.payment_status IN ('C','G','M'),A.payment,0),0)) payTotal, 
+				SUM(IFNULL(IF(A.payment_status IN ('C','G'),A.payment,0),0)) refundTotal
+		FROM payment A
+		WHERE DATE_FORMAT(A.reg_date,'%Y%m%d') = DATE_FORMAT(SYSDATE(),'%Y%m%d')
+		and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+    </select>
+    <select id="getLastMonthSummary" resultType="java.util.HashMap" parameterType="java.util.Map" >
+	    SELECT SUM(IF(A.payment_status = 'M',1,0)) mCnt,
+				SUM(IF(A.payment_status IN ('D','I','W'),1,0)) dCnt,
+				SUM(IF(A.payment_status = 'R',1,0)) rCnt,
+				SUM(IF(A.payment_status = 'O',1,0)) oCnt,
+				SUM(IF(A.payment_status = 'C',1,0)) cCnt,
+				SUM(IF(A.payment_status IN ('F','S'),1,0)) sCnt,
+				SUM(IF(A.payment_status = 'H',1,0)) hCnt,
+				SUM(IF(A.payment_status = 'G',1,0)) gCnt
+		FROM payment A
+		WHERE A.reg_date BETWEEN DATE_ADD(SYSDATE(), INTERVAL -1 MONTH) AND SYSDATE()
+		and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+    </select>
+    <select id="getStatusCount" resultType="java.util.HashMap" parameterType="java.util.Map" >
+	    SELECT SUM(IF(A.payment_status = 'M',1,0)) mCnt,
+				SUM(IF(A.payment_status = 'D',1,0)) dCnt,
+				SUM(IF(A.payment_status = 'I',1,0)) iCnt,
+				SUM(IF(A.payment_status = 'W',1,0)) wCnt,
+				SUM(IF(A.payment_status = 'R',1,0)) rCnt,
+				SUM(IF(A.payment_status = 'O',1,0)) oCnt,
+				SUM(IF(A.payment_status = 'C',1,0)) cCnt,
+				SUM(IF(A.payment_status = 'F',1,0)) fCnt,
+				SUM(IF(A.payment_status = 'S',1,0)) sCnt,
+				SUM(IF(A.payment_status = 'H',1,0)) hCnt,
+				SUM(IF(A.payment_status = 'G',1,0)) gCnt
+		FROM payment A
+		WHERE 1=1
+		and A.order_no NOT LIKE 'GW%'
+and A.payment_status != 'N'
+		<if test="start_date != null and start_date !=''"><![CDATA[AND A.reg_date >= #{start_date} ]]></if>
+        <if test="end_date != null and end_date !=''"><![CDATA[AND A.reg_date <= #{end_date} ]]></if>
+    </select>
+    <select id="getPaymentBundleList" resultType="hashmap" parameterType="hashmap">
+    	SELECT A.*, B.*,
+			(SELECT Z.file_link FROM product_file Z WHERE Z.key_id = B.product_cd AND Z.file_order = 1) AS file_1,
+			(SELECT Z.store_name FROM store Z where Z.supplier_cd = B.product_supplier) as product_made_company_name
+		FROM payment_bundle A
+		JOIN product B
+		ON A.product_cd = B.product_cd
+		WHERE A.order_no = #{order_no}
+    </select>
+
+	<select id="getMyPageSnsShareList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT A.*,
+    	(select B.file_link from product_file B where B.key_id = A.product_cd and B.file_order = 1) as file_1
+    	FROM sns_history A
+    	where usr_id = #{usr_id}
+    	AND 1=1
+    	order by reg_date DESC
+        LIMIT 5
+	</select>
+</mapper>

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="barobill-api-cxf">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../onejoylife/web/WEB-INF/lib/barobill-api-cxf.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../onejoylife/web/WEB-INF/lib/CtCli-1.0.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../onejoylife/web/WEB-INF/lib/barobill-api-cxf.jar!/" />
+    </SOURCES>
+  </library>
+</component>
